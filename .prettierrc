@@ -1,0 +1,24 @@
+{
+  "plugins": ["prettier-plugin-sh"],
+  "printWidth": 180,
+  "tabWidth": 4,
+  "semi": false,
+  "singleQuote": true,
+  "useTabs": false,
+  "overrides": [
+    {
+      "files": "*.sh",
+      "options": {
+        "parser": "sh",
+        "variant": 4
+      }
+    },
+    {
+      "files": ["webui/**/*.ts", "webui/**/*.mjs"],
+      "options": {
+        "useTabs": true,
+        "semi": true
+      }
+    }
+  ]
+}

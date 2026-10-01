@@ -1,0 +1,92 @@
+{
+ "scenario": "no-config",
+ "steps": [
+  {
+   "step": "before boot",
+   "net": {
+    "rules4": [],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [],
+     "routes": [],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   }
+  },
+  {
+   "step": "boot",
+   "exit": 0,
+   "output": "",
+   "calls": [],
+   "changed": {
+    "/data/adb/modules/nyxbridge/module.prop": [
+     "0o644",
+     "0:0",
+     "id=nyxbridge\nname=NyxBridge\nversion=<module.prop>\nversionCode=<module.prop>\nauthor=poqdavid\ndescription=[✅ Active] 192.168.42.2 on vap-br0 — details in the WebUI\nupdateJson=https://raw.githubusercontent.com/poqdavid/nyxbridge/main/update.json\n"
+    ],
+    "/data/adb/nyxbridge": [
+     "0o700",
+     "0:0",
+     null
+    ],
+    "/data/adb/nyxbridge/config.sh": [
+     "0o600",
+     "0:0",
+     "enabled=1\nmonitor=1\nipv6=0\nhost_octet=2\nrule_pref=7001\nrestart_app=\nwebui_theme=system\nwebui_monet=1\nwebui_fullscreen=1"
+    ],
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "<time> Watcher started (pid <pid>)\n<time> Added 192.168.42.2/24 to vap-br0\n<time> Added rule 7001: to 192.168.42.0/24 lookup main\n<time> Active on vap-br0\n"
+    ],
+    "/dev/nyxbridge": [
+     "0o700",
+     "0:0",
+     null
+    ],
+    "/dev/nyxbridge/applied": [
+     "0o644",
+     "0:0",
+     "A4_ADDR=192.168.42.2/24\nA4_BR=vap-br0\nA4_IDX=<ifindex of vap-br0>\nA6_BR=\nA6_IDX=\nA6_ORIG=\nSIG6=\nPREF=7001\n"
+    ],
+    "/dev/nyxbridge/daemon.lock": [
+     "0o644",
+     "0:0",
+     ""
+    ],
+    "/dev/nyxbridge/daemon.pid": [
+     "0o644",
+     "0:0",
+     "<pid> <start time>"
+    ],
+    "/dev/nyxbridge/reconcile.lock": [
+     "0o644",
+     "0:0",
+     ""
+    ],
+    "/dev/nyxbridge/status": [
+     "0o644",
+     "0:0",
+     "state=active\nreason=\nreason_code=\nreason_arg=\ntime=<time>\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7001: from all to 192.168.42.0/24 lookup main"
+    ],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [
+      "inet 192.168.42.2/24"
+     ],
+     "routes": [
+      "192.168.42.0/24 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 1
+  }
+ ]
+}

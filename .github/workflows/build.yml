@@ -1,0 +1,392 @@
+name: Build
+
+# Builds the flashable module zip on every push and PR. Six jobs run side by
+# side and feed one Package job:
+#   Rust checks       fmt, clippy and tests on the host
+#   arm64 binary      static aarch64 bin/nyxbridge, built with cross (musl)
+#   Boot and watcher  service.sh and the watcher in 19 device scenarios (tests/boot)
+#   WebUI             format check, type-check, bundle webroot/js/app.js
+#   WebUI tests       every page and setting in Chromium against the real
+#                     program, sh and mksh (tests/webui)
+#   Module scripts    ShellCheck, installer checks, Telegram caption tests
+#   Package           zip, KernelSU Modules checks, artifact, Telegram, release
+#
+# A manual run (workflow_dispatch) also sends the zip to Telegram as a CI
+# build. A v* tag publishes an immutable GitHub release through the KernelSU
+# Modules release action, with this version's CHANGELOG.md section as notes,
+# sends it to Telegram as a Release build and refreshes update.json.
+# Releases need Settings -> General -> Releases -> "Enable release immutability".
+#
+# Secrets used by the Telegram steps (Settings -> Secrets and variables -> Actions):
+#   TELEGRAM_BOT_TOKEN   bot token from @BotFather
+#   TELEGRAM_CHAT_ID     target channel/chat id (e.g. @yourchannel or -100...)
+
+on:
+    push:
+        branches: [main]
+        tags: ['v*']
+    pull_request:
+        branches: [main]
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: build-${{ github.ref }}
+    cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    rust:
+        name: Rust checks
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: dtolnay/rust-toolchain@stable
+              with:
+                  components: rustfmt, clippy
+            - uses: Swatinem/rust-cache@v2
+            - name: Format
+              run: cargo fmt --check
+            - name: Clippy
+              run: cargo clippy --all-targets --locked -- -D warnings
+            - name: Test
+              run: cargo test --locked
+
+    binary:
+        name: arm64 binary
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - name: Read module version
+              id: mod
+              run: echo "version=$(sed -n 's/^version=//p' module/module.prop | head -n1)" >> "$GITHUB_OUTPUT"
+            - uses: dtolnay/rust-toolchain@stable
+            # Also caches the installed cross binary between runs.
+            - uses: Swatinem/rust-cache@v2
+            - name: Install cross
+              run: cargo install cross --locked
+            - name: Build
+              # cross builds a fully static aarch64 binary in a container, so it
+              # needs no NDK and runs on any arm64 Android device.
+              # NYX_MODULE_VERSION is forwarded into the container by Cross.toml
+              # and read by `nyxbridge --version`.
+              env:
+                  NYX_MODULE_VERSION: ${{ steps.mod.outputs.version }}
+              run: |
+                  cross build --release --locked --target aarch64-unknown-linux-musl
+                  file target/aarch64-unknown-linux-musl/release/nyxbridge
+            - uses: actions/upload-artifact@v7
+              with:
+                  name: nyxbridge-bin
+                  path: target/aarch64-unknown-linux-musl/release/nyxbridge
+                  if-no-files-found: error
+
+    boot:
+        name: Boot and watcher
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: dtolnay/rust-toolchain@stable
+            - uses: Swatinem/rust-cache@v2
+            - name: Install a static busybox
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y busybox-static
+            - name: Build a static host binary
+              env:
+                  RUSTFLAGS: -C target-feature=+crt-static
+              run: cargo build --release --locked --target x86_64-unknown-linux-gnu
+            - name: Run the boot scenarios
+              # Each scenario runs service.sh and the watcher in a chroot with a
+              # network of its own and compares every call, written file and
+              # network change with tests/boot/expected.
+              run: sudo python3 tests/boot/run.py --binary target/x86_64-unknown-linux-gnu/release/nyxbridge
+
+    webui:
+        name: WebUI
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - name: Format check
+              run: npm run format:check
+            - name: Type-check
+              run: npm run typecheck
+            - name: Bundle
+              # esbuild bundles webui/src into module/webroot/js/app.js, the one
+              # script the manager loads.
+              run: npm run build
+            - uses: actions/upload-artifact@v7
+              with:
+                  name: webui
+                  path: module/webroot/js/app.js
+                  if-no-files-found: error
+
+    webui-tests:
+        name: WebUI tests
+        runs-on: ubuntu-latest
+        env:
+            # Shared by the install and by the tests, which run as root.
+            PLAYWRIGHT_BROWSERS_PATH: /tmp/ms-playwright
+        steps:
+            - uses: actions/checkout@v7
+            - uses: dtolnay/rust-toolchain@stable
+            - uses: Swatinem/rust-cache@v2
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - name: Install mksh and Chromium
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y mksh
+                  npx playwright install --with-deps chromium
+            - name: Build
+              run: |
+                  npm run build
+                  cargo build --release --locked
+            # Root for the network namespaces the tests build their hotspot in.
+            - name: WebUI tests (sh)
+              run: sudo --preserve-env=PLAYWRIGHT_BROWSERS_PATH "$(command -v node)" tests/webui/run.cjs
+            - name: WebUI tests (mksh)
+              run: sudo --preserve-env=PLAYWRIGHT_BROWSERS_PATH NYX_SH=mksh "$(command -v node)" tests/webui/run.cjs
+
+    scripts:
+        name: Module scripts
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - name: ShellCheck
+              # Pinned release; the busybox dialect and rules are in .shellcheckrc.
+              # config.sh is left out: it only assigns settings for other scripts.
+              env:
+                  SHELLCHECK: v0.11.0
+              run: |
+                  curl -fsSL "https://github.com/koalaman/shellcheck/releases/download/${SHELLCHECK}/shellcheck-${SHELLCHECK}.linux.x86_64.tar.xz" | tar -xJ
+                  "./shellcheck-${SHELLCHECK}/shellcheck" --version
+                  git ls-files 'module/*.sh' 'scripts/*.sh' | grep -vx 'module/config.sh' | xargs "./shellcheck-${SHELLCHECK}/shellcheck" -S warning
+            - name: Installer checks
+              run: python3 scripts/test-install.py -v
+            - name: Telegram caption tests
+              run: python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
+
+    package:
+        name: Package
+        needs: [rust, binary, boot, webui, webui-tests, scripts]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write # releases and the update.json commit
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - name: Read module version
+              id: mod
+              run: |
+                  PROP=module/module.prop
+                  if [ ! -f "$PROP" ]; then
+                    echo "::error::$PROP not found — the flashable files must live in module/"
+                    exit 1
+                  fi
+                  VERSION=$(sed -n 's/^version=//p'      "$PROP" | head -n1)
+                  VERSION_CODE=$(sed -n 's/^versionCode=//p' "$PROP" | head -n1)
+                  DESCRIPTION=$(sed -n 's/^description=//p' "$PROP" | head -n1)
+                  if [ -z "$VERSION" ] || [ -z "$VERSION_CODE" ]; then
+                    echo "::error::version / versionCode missing in module.prop"
+                    exit 1
+                  fi
+                  ZIP="${{ github.event.repository.name }}-${VERSION}.zip"
+                  {
+                    echo "version=$VERSION"
+                    echo "version_code=$VERSION_CODE"
+                    echo "zip=$ZIP"
+                    echo "description=$DESCRIPTION"
+                  } >> "$GITHUB_OUTPUT"
+                  echo "Version: $VERSION (code $VERSION_CODE) -> $ZIP"
+
+            - name: Verify tag matches module.prop (tag builds only)
+              if: startsWith(github.ref, 'refs/tags/')
+              env:
+                  TAG: ${{ github.ref_name }}
+                  VERSION: ${{ steps.mod.outputs.version }}
+              run: |
+                  if [ "$TAG" != "$VERSION" ]; then
+                    echo "::error::tag '$TAG' != module.prop version '$VERSION'"
+                    exit 1
+                  fi
+
+            - name: Release notes from CHANGELOG.md
+              # The body of this version's "## [version]" section, used for the
+              # GitHub release (shown as the changelog on KernelSU Modules).
+              env:
+                  VERSION: ${{ steps.mod.outputs.version }}
+                  IS_TAG: ${{ startsWith(github.ref, 'refs/tags/') }}
+              run: |
+                  awk -v v="$VERSION" '
+                    /^## / { if (found) exit; found = (index($0, "[" v "]") > 0); next }
+                    found { lines[++n] = $0 }
+                    END {
+                      s = 1; while (s <= n && lines[s] ~ /^[[:space:]]*$/) s++
+                      e = n; while (e >= s && lines[e] ~ /^[[:space:]]*$/) e--
+                      for (i = s; i <= e; i++) print lines[i]
+                    }' CHANGELOG.md > "$RUNNER_TEMP/release-notes.md"
+                  if [ ! -s "$RUNNER_TEMP/release-notes.md" ]; then
+                    if [ "$IS_TAG" = true ]; then
+                      echo "::error::CHANGELOG.md has no '## [$VERSION]' section"
+                      exit 1
+                    fi
+                    echo "::warning::CHANGELOG.md has no '## [$VERSION]' section yet"
+                  fi
+                  cat "$RUNNER_TEMP/release-notes.md"
+
+            - name: Download the arm64 binary
+              uses: actions/download-artifact@v8
+              with:
+                  name: nyxbridge-bin
+                  path: module/bin
+
+            - name: Download the WebUI bundle
+              uses: actions/download-artifact@v8
+              with:
+                  name: webui
+                  path: module/webroot/js
+
+            - name: Check the payload
+              # bin/nyxbridge must be a static arm64 executable (no interpreter):
+              # Android has no musl loader, and the installer runs it to check
+              # that it works before finishing.
+              run: |
+                  BIN=module/bin/nyxbridge
+                  chmod 0755 "$BIN"
+                  file "$BIN"
+                  readelf -h "$BIN" | grep -q 'Class:.*ELF64' || { echo "::error::$BIN is not a 64-bit ELF"; exit 1; }
+                  readelf -h "$BIN" | grep -q 'Machine:.*AArch64' || { echo "::error::$BIN is not an arm64 binary"; exit 1; }
+                  if readelf -lW "$BIN" | grep -q 'INTERP'; then echo "::error::$BIN is dynamically linked"; exit 1; fi
+                  test -s module/webroot/js/app.js || { echo "::error::module/webroot/js/app.js is missing"; exit 1; }
+
+            - name: Bundle license and notices
+              # AGPL-3.0 has to travel with the program, so the flashable zip
+              # carries its own copy. Copied at build time so the repo keeps a
+              # single LICENSE / NOTICE.md (the copies are git-ignored).
+              run: cp LICENSE NOTICE.md module/
+
+            - name: Generate per-file integrity hashes
+              run: sh scripts/gen-hashes.sh module
+
+            - name: Package flashable zip
+              id: pkg
+              run: |
+                  cd module
+                  # module.prop MUST sit at the zip root or KSU/Magisk won't see it.
+                  test -f module.prop
+                  zip -r9 "../${{ steps.mod.outputs.zip }}" . \
+                    -x '*.DS_Store' -x '__MACOSX/*' -x '*/.git*'
+                  cd ..
+                  SHA=$(sha256sum "${{ steps.mod.outputs.zip }}" | awk '{print $1}')
+                  echo "$SHA  ${{ steps.mod.outputs.zip }}" > "${{ steps.mod.outputs.zip }}.sha256"
+                  echo "zip_sha256=$SHA" >> "$GITHUB_OUTPUT"
+                  echo "----- zip contents -----"
+                  unzip -l "${{ steps.mod.outputs.zip }}"
+                  echo "zip SHA-256: $SHA"
+
+            - name: Check against KernelSU Modules
+              # The same validator KernelSU Modules runs: zip structure,
+              # module.prop, module.yaml and the asset name. Publishes nothing.
+              if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+              uses: KernelSU-Modules/tools/actions/module-release@b6d340ddcd562ad482568b6e66b8d7a9c34d645e
+              with:
+                  zip: ${{ steps.mod.outputs.zip }}
+                  dry-run: true
+
+            - name: Upload build artifact
+              uses: actions/upload-artifact@v7
+              with:
+                  name: ${{ github.event.repository.name }}-${{ steps.mod.outputs.version }}
+                  path: |
+                      ${{ steps.mod.outputs.zip }}
+                      ${{ steps.mod.outputs.zip }}.sha256
+                  if-no-files-found: error
+                  compression-level: 0
+
+            # ---------- CI-only (manual runs, not tags) ----------
+            - name: Send CI build to Telegram
+              if: github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/')
+              env:
+                  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+                  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+                  ZIP: ${{ steps.mod.outputs.zip }}
+                  VERSION: ${{ steps.mod.outputs.version }}
+                  RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+                  GIT_REF_NAME: ${{ github.ref_name }}
+                  GIT_REF_TYPE: ${{ github.ref_type }}
+                  GIT_SHA: ${{ github.sha }}
+              run: python3 .github/scripts/telegram.py --zip "$ZIP" --channel CI --version "$VERSION"
+
+            # ---------- release-only (v* tags) ----------
+            - name: Publish release (KernelSU Modules)
+              # Validates the zip, then publishes an immutable release with the
+              # asset {id}-{versionCode}-{version}.zip; on any error nothing is
+              # published.
+              id: release
+              if: startsWith(github.ref, 'refs/tags/')
+              uses: KernelSU-Modules/tools/actions/module-release@b6d340ddcd562ad482568b6e66b8d7a9c34d645e
+              with:
+                  zip: ${{ steps.mod.outputs.zip }}
+                  name: ${{ steps.mod.outputs.version }}
+                  release-notes-file: ${{ runner.temp }}/release-notes.md
+                  prerelease: ${{ contains(github.ref_name, '-') }}
+
+            - name: Send Release build to Telegram
+              if: startsWith(github.ref, 'refs/tags/')
+              env:
+                  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+                  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+                  ZIP: ${{ steps.mod.outputs.zip }}
+                  VERSION: ${{ steps.mod.outputs.version }}
+                  RELEASE_URL: ${{ steps.release.outputs.release-url }}
+                  RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+                  GIT_REF_NAME: ${{ github.ref_name }}
+                  GIT_REF_TYPE: ${{ github.ref_type }}
+                  GIT_SHA: ${{ github.sha }}
+              run: python3 .github/scripts/telegram.py --zip "$ZIP" --channel Release --version "$VERSION" --release-url "$RELEASE_URL"
+
+            - name: Refresh update.json on the default branch
+              if: startsWith(github.ref, 'refs/tags/')
+              env:
+                  REPO: ${{ github.repository }}
+                  TAG: ${{ github.ref_name }}
+                  VERSION: ${{ steps.mod.outputs.version }}
+                  VERSION_CODE: ${{ steps.mod.outputs.version_code }}
+                  ASSET: ${{ steps.release.outputs.asset-name }}
+                  DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+              run: |
+                  git config user.name  "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git fetch origin "$DEFAULT_BRANCH"
+                  git checkout "$DEFAULT_BRANCH"
+                  cat > update.json <<EOF
+                  {
+                    "version": "$VERSION",
+                    "versionCode": $VERSION_CODE,
+                    "zipUrl": "https://github.com/$REPO/releases/download/$TAG/$ASSET",
+                    "changelog": "https://raw.githubusercontent.com/$REPO/$DEFAULT_BRANCH/CHANGELOG.md"
+                  }
+                  EOF
+                  if git diff --quiet -- update.json; then
+                    echo "update.json already up to date"
+                  else
+                    git add update.json
+                    git commit -m "ci: bump update.json to $VERSION"
+                    git push origin "$DEFAULT_BRANCH"
+                  fi

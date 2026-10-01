@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/KernelSU-Modules/tools/main/schemas/module.schema.json
+# KernelSU Modules metadata: https://developers.kernelsu.org/docs/module-yaml
+# version and versionCode come from module/module.prop inside the release zip.
+schemaVersion: 1
+id: nyxbridge
+name: NyxBridge
+summary: >-
+    Puts the phone on VirtualAP's managed-mode hotspot bridge so its apps can
+    reach devices on the hotspot, with a Material You WebUI.
+description: README.md
+license: AGPL-3.0-only
+homepage: https://github.com/poqdavid/nyxbridge
+support: https://github.com/poqdavid/nyxbridge/issues
+tags: [virtualap, hotspot, networking, webui]
+metamodule: false
+
+authors:
+    - name: poqdavid
+      url: https://github.com/poqdavid
+
+compatibility:
+    architectures: [arm64-v8a]
+
+release:
+    assetPattern: 'nyxbridge-*.zip'
