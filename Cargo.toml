@@ -1,0 +1,17 @@
+[package]
+name = "nyxbridge"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.85"
+license = "AGPL-3.0-only"
+description = "NyxBridge: the phone's address and routing rules on VirtualAP's managed-mode bridge"
+publish = false
+
+[dependencies]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

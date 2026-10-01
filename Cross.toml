@@ -1,0 +1,2 @@
+[build.env]
+passthrough = ["NYX_MODULE_VERSION"]

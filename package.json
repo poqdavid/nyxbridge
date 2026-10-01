@@ -1,0 +1,19 @@
+{
+	"name": "nyxbridge",
+	"version": "1.0.0",
+	"license": "AGPL-3.0-only",
+	"private": true,
+	"devDependencies": {
+		"esbuild": "0.28.2",
+		"prettier": "3.9.9",
+		"prettier-plugin-sh": "0.20.2",
+		"typescript": "7.0.2"
+	},
+	"scripts": {
+		"build": "node webui/build.mjs",
+		"typecheck": "tsc -p webui",
+		"format:rust": "cargo fmt",
+		"format:sh": "prettier --write \"**/*.sh\"",
+		"format:webui": "prettier --write \"webui/**/*.{ts,mjs}\""
+	}
+}

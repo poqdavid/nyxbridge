@@ -1,0 +1,19 @@
+# Build artifacts
+*.sha256
+*.zip
+build/
+out/
+node_modules/
+module/LICENSE
+module/NOTICE.md
+# The WebUI script, bundled from webui/src at build time (npm run build)
+module/webroot/js/
+
+# Rust
+/target/
+# The nyxbridge binary is built by CI (cargo / cross) at build time.
+module/bin/nyxbridge
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
