@@ -1,0 +1,13 @@
+{
+	"name": "nyxbridge",
+	"version": "1.0.0",
+	"license": "AGPL-3.0-only",
+	"private": true,
+	"devDependencies": {
+		"prettier": "3.9.9",
+		"prettier-plugin-sh": "0.20.2"
+	},
+	"scripts": {
+		"format:sh": "prettier --write \"**/*.sh\""
+	}
+}

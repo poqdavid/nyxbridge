@@ -1,0 +1,296 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+/* ---------- Window insets ----------
+   The manager's WebView is edge-to-edge, because tokens.css imports
+   mui.kernelsu.org/internal/insets.css and requesting that file makes
+   KernelSU enable edge-to-edge and stop padding the WebView itself. The
+   system bars are therefore drawn OVER the page and the module owns its
+   own insets.
+
+   With fullscreen on the bars are hidden, so both values are 0 and none
+   of this matters - which is why no inset handling existed while
+   fullscreen was hardcoded on. Switch it off and the top bar would
+   otherwise sit underneath the status bar.
+
+   Gated on data-fullscreen rather than trusting --window-inset-* to drop
+   to zero when the bars hide: if KernelSU computes them once at load, an
+   ungated rule would leave a phantom gap the moment fullscreen came back
+   on. env() is the fallback for hosts that serve no insets.css, and the
+   var() chain is used instead of max() on purpose - a max() mixing a
+   unitless 0 with a length is invalid and would take the whole
+   declaration down with it. */
+:root {
+	--nyx-inset-top: 0px;
+	--nyx-inset-bottom: 0px;
+}
+:root[data-fullscreen="off"] {
+	--nyx-inset-top: var(--window-inset-top, env(safe-area-inset-top, 0px));
+	--nyx-inset-bottom: var(--window-inset-bottom, env(safe-area-inset-bottom, 0px));
+}
+
+body {
+	font: var(--md-type-body-md);
+	background: var(--md-background);
+	color: var(--md-on-background);
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	overscroll-behavior-y: contain;
+}
+
+/* ---------- Top app bar ---------- */
+.top-bar {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: var(--nyx-inset-top) 16px 0;
+	/* box-sizing is border-box, so the inset has to be added to the
+	   height or it would eat into the 64px bar instead of sitting
+	   above it. */
+	height: calc(64px + var(--nyx-inset-top));
+	background: var(--md-surface);
+	border-bottom: 1px solid var(--md-outline-variant);
+}
+.top-bar__title { font: var(--md-type-title-lg); flex: 1; }
+.icon-btn {
+	width: 40px; height: 40px; border-radius: var(--md-shape-full);
+	border: none; background: transparent; color: var(--md-on-surface-variant);
+	display: flex; align-items: center; justify-content: center;
+	cursor: pointer;
+}
+.icon-btn:hover { background: color-mix(in srgb, var(--md-on-surface) 8%, transparent); }
+.icon-btn svg { width: 24px; height: 24px; fill: currentColor; }
+
+/* ---------- Page container ---------- */
+main {
+	flex: 1;
+	padding: 16px 16px calc(96px + var(--nyx-inset-bottom));
+	max-width: 640px;
+	width: 100%;
+	margin: 0 auto;
+}
+.page { display: none; animation: fade .15s ease-out; }
+.page.active { display: block; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.section-title {
+	font: var(--md-type-title-md);
+	color: var(--md-on-surface-variant);
+	margin: 24px 4px 8px;
+}
+.section-title:first-child { margin-top: 4px; }
+
+/* ---------- Bottom navigation ---------- */
+.nav-bar {
+	position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+	display: flex;
+	background: var(--md-surface-container);
+	border-top: 1px solid var(--md-outline-variant);
+	padding: 8px 0 max(8px, var(--nyx-inset-bottom));
+}
+.nav-item {
+	flex: 1; border: none; background: none; cursor: pointer;
+	display: flex; flex-direction: column; align-items: center; gap: 4px;
+	color: var(--md-on-surface-variant);
+	font: var(--md-type-label-md);
+	padding: 4px 0;
+}
+.nav-item svg { width: 24px; height: 24px; fill: currentColor; }
+.nav-item .pill {
+	padding: 2px 20px; border-radius: var(--md-shape-full);
+	transition: background .15s ease;
+}
+.nav-item[aria-current="page"] { color: var(--md-on-secondary-container); }
+.nav-item[aria-current="page"] .pill { background: var(--md-secondary-container); }
+
+/* ---------- Cards ---------- */
+.card {
+	background: var(--md-surface-container-low);
+	border-radius: var(--md-shape-lg);
+	padding: 16px;
+	margin-bottom: 12px;
+}
+.card--outlined { background: transparent; border: 1px solid var(--md-outline-variant); }
+
+/* ---------- Settings rows ---------- */
+.setting-row {
+	display: flex; align-items: center; gap: 16px;
+	padding: 14px 4px;
+	border-bottom: 1px solid var(--md-outline-variant);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-row__text { flex: 1; min-width: 0; }
+.setting-row__title { font: var(--md-type-body-lg); }
+.setting-row__desc { font: var(--md-type-body-md); color: var(--md-on-surface-variant); margin-top: 2px; }
+
+/* Rows whose control is a dropdown stack vertically: title, then the
+   full description, then the control full-width beneath it. Side-by-side
+   flex (the default) squeezes a long description into a tall narrow
+   column with the control stranded mid-height beside it. */
+.setting-row--stacked {
+	flex-direction: column;
+	align-items: stretch;
+	gap: 12px;
+}
+.setting-row--stacked .setting-row__text { flex: none; }
+.select-field--block { width: 100%; box-sizing: border-box; }
+
+/* M3-style switch, hand rolled (no external component library) */
+.m3-switch { position: relative; width: 52px; height: 32px; flex: none; }
+.m3-switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+.m3-switch__track {
+	position: absolute; inset: 0; border-radius: var(--md-shape-full);
+	background: var(--md-surface-container-highest);
+	border: 2px solid var(--md-outline);
+	transition: background .15s ease, border-color .15s ease;
+}
+.m3-switch__thumb {
+	position: absolute; top: 50%; left: 4px; width: 16px; height: 16px;
+	border-radius: 50%; background: var(--md-outline);
+	transform: translate(0,-50%);
+	transition: transform .15s ease, width .15s ease, height .15s ease, background .15s ease, left .15s ease;
+}
+.m3-switch input:checked ~ .m3-switch__track { background: var(--md-primary); border-color: var(--md-primary); }
+.m3-switch input:checked ~ .m3-switch__thumb {
+	background: var(--md-on-primary); width: 24px; height: 24px; left: 24px;
+}
+
+.select-field {
+	appearance: none;
+	background: var(--md-surface-container-high);
+	color: var(--md-on-surface);
+	border: 1px solid var(--md-outline);
+	border-radius: var(--md-shape-sm);
+	padding: 8px 32px 8px 12px;
+	font: var(--md-type-body-md);
+}
+
+.btn {
+	border: none; border-radius: var(--md-shape-full);
+	padding: 10px 20px; font: var(--md-type-label-lg);
+	cursor: pointer;
+}
+.btn--filled { background: var(--md-primary); color: var(--md-on-primary); }
+.btn--tonal { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.btn--text { background: transparent; color: var(--md-primary); }
+.btn.is-busy { cursor: progress; opacity: .9; }
+.btn[disabled] { cursor: default; }
+/* Spinner uses currentColor so it matches the button's text in either theme,
+   and animates transform only, which the compositor can keep turning even
+   while the main thread is busy running the check. */
+.btn__spinner {
+	display: inline-block; width: 1em; height: 1em;
+	margin-right: 8px; vertical-align: -0.15em;
+	border: 2px solid currentColor; border-right-color: transparent;
+	border-radius: 50%;
+	animation: nyx-spin .7s linear infinite;
+}
+@keyframes nyx-spin { to { transform: rotate(360deg); } }
+/* The top-bar refresh icon turns (its own way round) while the page is
+   re-read - transform only, for the same compositor reason as above. */
+#refresh-btn.is-busy svg { animation: nyx-spin .8s linear infinite reverse; }
+/* Keep the spinners (they convey progress) but ease them for reduced-motion. */
+@media (prefers-reduced-motion: reduce) { .btn__spinner, #refresh-btn.is-busy svg { animation-duration: 1.5s; } }
+
+/* ---------- Soft keyboard ----------
+   Driven by data-editing (set on focus), NOT by keyboard detection: in an
+   edge-to-edge activity the IME is drawn over the window without resizing
+   it, so the page cannot tell the keyboard is there. Everything below
+   works whether or not it can. */
+
+/* Keeps a field clear of the sticky 64px top bar when scrolled to top. */
+input.select-field {
+	scroll-margin-top: calc(80px + var(--nyx-inset-top));
+}
+
+/* The room that makes "scroll the field to the top" actually possible. A
+   field near the end of the page has nothing below it to scroll against,
+   so without this the browser simply refuses to move. Removed again on
+   blur, so it never affects normal layout. */
+:root[data-editing="on"] main {
+	padding-bottom: 80vh;
+}
+
+.nav-bar { transition: transform .2s ease; }
+:root[data-editing="on"] .nav-bar {
+	transform: translateY(100%);
+	pointer-events: none;
+}
+
+/* ====================================================================
+ * NyxBridge
+ * ================================================================== */
+
+/* ---------- Main: the status box ---------- */
+.bridge-card { padding: 16px; }
+.bridge-card__head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+.bridge-card__text { min-width: 0; }
+.state-dot {
+	flex: none;
+	width: 12px; height: 12px;
+	margin-top: 7px;
+	border-radius: 50%;
+	background: var(--md-outline);
+}
+.state-dot.is-active { background: var(--md-success); }
+.state-dot.is-error { background: var(--md-error); }
+.bridge-card__title { font: 500 20px/26px 'Roboto', system-ui, sans-serif; }
+.bridge-card__reason { font: var(--md-type-body-md); color: var(--md-on-surface-variant); margin-top: 2px; }
+
+.kv-row {
+	display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+	padding: 10px 0;
+	border-top: 1px solid var(--md-outline-variant);
+}
+.kv-row__label { flex: none; color: var(--md-on-surface-variant); font: 400 15px/22px 'Roboto', system-ui, sans-serif; }
+.kv-row__value { min-width: 0; text-align: right; overflow-wrap: break-word; font: 400 15px/22px 'Roboto', system-ui, sans-serif; }
+.kv-row__value.is-ok { color: var(--md-success); }
+.kv-row__value.is-missing { color: var(--md-on-surface-variant); }
+.kv-row--switch { align-items: center; }
+.kv-row__text { display: grid; gap: 2px; min-width: 0; }
+.kv-row__desc { font: var(--md-type-body-md); color: var(--md-on-surface-variant); }
+.kv-row__desc.is-warn { color: var(--md-error); }
+.kv-row--switch .m3-switch input:disabled { cursor: progress; }
+
+.bridge-card__actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.bridge-card__actions .btn { min-height: 40px; }
+
+/* ---------- Settings: phone address field ---------- */
+.ip-edit { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ip-edit__prefix { font: 16px/24px ui-monospace, 'Roboto Mono', monospace; }
+.ip-edit__input {
+	width: 76px;
+	min-height: 40px;
+	padding: 8px 12px;
+	font: 16px/24px ui-monospace, 'Roboto Mono', monospace;
+}
+.ip-edit__input:focus { outline: 2px solid var(--md-primary); outline-offset: -1px; border-color: transparent; }
+.ip-edit__input.is-invalid { border-color: var(--md-error); }
+.setting-row__desc.is-warn { color: var(--md-error); }
+
+.page-footnote { margin: 16px 4px 0; }
+.page-footnote code, .prose code { font: 12px/1.5 ui-monospace, 'Roboto Mono', monospace; overflow-wrap: anywhere; }
+
+/* ---------- Logs ---------- */
+.log-view {
+	margin: 0;
+	max-height: 62vh;
+	overflow: auto;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	font: 12px/1.6 ui-monospace, 'Roboto Mono', monospace;
+	color: var(--md-on-surface);
+}
+.log-view.is-empty { color: var(--md-on-surface-variant); font: var(--md-type-body-md); }
+
+/* ---------- About ---------- */
+.about-head { text-align: center; }
+.about-head__name { font: var(--md-type-title-lg); margin-bottom: 4px; }
+.about-head__version { color: var(--md-on-surface-variant); }
+.prose p { margin: 0 0 8px; }
+.prose p:last-child { margin-bottom: 0; }
+.prose .muted { color: var(--md-on-surface-variant); font-size: 13px; }

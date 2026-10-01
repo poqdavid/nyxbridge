@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>NyxBridge</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+<!-- Every module is requested up front instead of in waves as imports are
+     discovered: the manager serves each file separately, so the waves add
+     up. Keep in sync with js/. -->
+<link rel="modulepreload" href="js/app.js">
+<link rel="modulepreload" href="js/ksu-bridge.js">
+<link rel="modulepreload" href="js/bridge-data.js">
+<link rel="modulepreload" href="js/i18n.js">
+<link rel="modulepreload" href="js/theme.js">
+<link rel="modulepreload" href="js/fullscreen.js">
+<link rel="modulepreload" href="js/keyboard.js">
+<link rel="modulepreload" href="js/icons.js">
+<link rel="modulepreload" href="js/util.js">
+<link rel="modulepreload" href="js/pages/main.js">
+<link rel="modulepreload" href="js/pages/settings.js">
+<link rel="modulepreload" href="js/pages/logs.js">
+<link rel="modulepreload" href="js/pages/about.js">
+</head>
+<body>
+	<header class="top-bar">
+		<span class="top-bar__title" id="app-title">NyxBridge</span>
+		<button class="icon-btn" id="refresh-btn" aria-label="Refresh">
+			<svg viewBox="0 0 24 24"><path d="M12 6V2L7 7l5 5V8a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/></svg>
+		</button>
+	</header>
+
+	<main id="app"></main>
+
+	<nav class="nav-bar" id="nav-bar"></nav>
+
+	<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+/* Material You.
+ *
+ * The KernelSU manager's WebView serves the device's live Monet palette
+ * and window insets from these internal URLs. Outside that WebView (a
+ * desktop browser, an older manager, a different root manager) the
+ * imports simply fail and every var() below falls back to the static
+ * palette, so nothing breaks.
+ *
+ * @import must come before any other rule, so these stay at the top.
+ */
+@import url('https://mui.kernelsu.org/internal/colors.css');
+@import url('https://mui.kernelsu.org/internal/insets.css');
+
+/*
+ * Material 3 color roles, hand-set (no build-time HCT generator here) from
+ * a deep indigo/violet seed - a nod to Nyx, since a near-black surface with
+ * a violet primary reads as "night" without just being grey-on-black.
+ *
+ * data-theme is always set to a concrete "light" or "dark" by theme.js -
+ * including for the "system" preference, which is resolved by asking
+ * Android directly rather than trusting the WebView's media query.
+ *
+ * The prefers-color-scheme block below only covers the brief moment
+ * before theme.js runs, so the page doesn't flash the wrong scheme.
+ */
+
+:root {
+	/* Declaring both schemes stops Android WebView from applying its own
+	   algorithmic darkening on top of our palette, and makes native
+	   controls (select, input) render in the matching scheme. */
+	color-scheme: light dark;
+
+	/* Light scheme */
+	--md-primary: #5B4B8A;
+	--md-on-primary: #FFFFFF;
+	--md-primary-container: #E7DDFF;
+	--md-on-primary-container: #1B0A5C;
+
+	--md-secondary: #625A72;
+	--md-on-secondary: #FFFFFF;
+	--md-secondary-container: #E8DEF8;
+	--md-on-secondary-container: #1E192B;
+
+	--md-tertiary: #7D5260;
+	--md-on-tertiary: #FFFFFF;
+	--md-tertiary-container: #FFD9E3;
+	--md-on-tertiary-container: #31101D;
+
+	--md-error: #BA1A1A;
+	--md-on-error: #FFFFFF;
+	--md-error-container: #FFDAD6;
+	--md-on-error-container: #410002;
+
+	--md-success: #2E6B3E;
+	--md-on-success: #FFFFFF;
+	--md-success-container: #B6F2C1;
+
+	--md-background: #FFFBFF;
+	--md-on-background: #1C1B1E;
+	--md-surface: #FFFBFF;
+	--md-on-surface: #1C1B1E;
+	--md-surface-variant: #E6E0EC;
+	--md-on-surface-variant: #48454E;
+
+	--md-surface-container-lowest: #FFFFFF;
+	--md-surface-container-low: #F7F2FA;
+	--md-surface-container: #F1ECF4;
+	--md-surface-container-high: #EBE6EE;
+	--md-surface-container-highest: #E5E1E9;
+
+	--md-outline: #79747E;
+	--md-outline-variant: #CAC4CF;
+	--md-scrim: #000000;
+	--md-shadow: #000000;
+
+	--md-elevation-1: 0 1px 2px rgba(0,0,0,0.14), 0 1px 3px 1px rgba(0,0,0,0.08);
+	--md-elevation-2: 0 1px 2px rgba(0,0,0,0.16), 0 2px 6px 2px rgba(0,0,0,0.10);
+	--md-elevation-3: 0 1px 3px rgba(0,0,0,0.18), 0 4px 8px 3px rgba(0,0,0,0.12);
+
+	--md-shape-xs: 4px;
+	--md-shape-sm: 8px;
+	--md-shape-md: 12px;
+	--md-shape-lg: 16px;
+	--md-shape-xl: 28px;
+	--md-shape-full: 999px;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) {
+		--md-primary: #CBBEFF;
+		--md-on-primary: #34285F;
+		--md-primary-container: #4B3B79;
+		--md-on-primary-container: #E7DDFF;
+
+		--md-secondary: #CBC2DB;
+		--md-on-secondary: #332D41;
+		--md-secondary-container: #4A4458;
+		--md-on-secondary-container: #E8DEF8;
+
+		--md-tertiary: #EFB8C8;
+		--md-on-tertiary: #4A2532;
+		--md-tertiary-container: #633B48;
+		--md-on-tertiary-container: #FFD9E3;
+
+		--md-error: #FFB4AB;
+		--md-on-error: #690005;
+		--md-error-container: #93000A;
+		--md-on-error-container: #FFDAD6;
+
+		--md-success: #9CD6A6;
+		--md-on-success: #0D3B1B;
+		--md-success-container: #1A522A;
+
+		--md-background: #131016;
+		--md-on-background: #E7E1E9;
+		--md-surface: #131016;
+		--md-on-surface: #E7E1E9;
+		--md-surface-variant: #48454E;
+		--md-on-surface-variant: #CAC4CF;
+
+		--md-surface-container-lowest: #0E0B12;
+		--md-surface-container-low: #1C1A21;
+		--md-surface-container: #201E26;
+		--md-surface-container-high: #2A2830;
+		--md-surface-container-highest: #35323B;
+
+		--md-outline: #948F99;
+		--md-outline-variant: #48454E;
+		--md-scrim: #000000;
+		--md-shadow: #000000;
+
+		--md-elevation-1: 0 1px 2px rgba(0,0,0,0.30), 0 1px 3px 1px rgba(0,0,0,0.20);
+		--md-elevation-2: 0 1px 2px rgba(0,0,0,0.34), 0 2px 6px 2px rgba(0,0,0,0.22);
+		--md-elevation-3: 0 1px 3px rgba(0,0,0,0.38), 0 4px 8px 3px rgba(0,0,0,0.26);
+	}
+}
+
+:root[data-theme="light"] { color-scheme: light; }
+
+:root[data-theme="dark"] {
+	color-scheme: dark;
+	--md-primary: #CBBEFF;
+	--md-on-primary: #34285F;
+	--md-primary-container: #4B3B79;
+	--md-on-primary-container: #E7DDFF;
+
+	--md-secondary: #CBC2DB;
+	--md-on-secondary: #332D41;
+	--md-secondary-container: #4A4458;
+	--md-on-secondary-container: #E8DEF8;
+
+	--md-tertiary: #EFB8C8;
+	--md-on-tertiary: #4A2532;
+	--md-tertiary-container: #633B48;
+	--md-on-tertiary-container: #FFD9E3;
+
+	--md-error: #FFB4AB;
+	--md-on-error: #690005;
+	--md-error-container: #93000A;
+	--md-on-error-container: #FFDAD6;
+
+	--md-success: #9CD6A6;
+	--md-on-success: #0D3B1B;
+	--md-success-container: #1A522A;
+
+	--md-background: #131016;
+	--md-on-background: #E7E1E9;
+	--md-surface: #131016;
+	--md-on-surface: #E7E1E9;
+	--md-surface-variant: #48454E;
+	--md-on-surface-variant: #CAC4CF;
+
+	--md-surface-container-lowest: #0E0B12;
+	--md-surface-container-low: #1C1A21;
+	--md-surface-container: #201E26;
+	--md-surface-container-high: #2A2830;
+	--md-surface-container-highest: #35323B;
+
+	--md-outline: #948F99;
+	--md-outline-variant: #48454E;
+}
+
+/* Type scale (subset actually used) */
+:root {
+	--md-type-display: 400 36px/44px 'Roboto', system-ui, sans-serif;
+	--md-type-title-lg: 400 22px/28px 'Roboto', system-ui, sans-serif;
+	--md-type-title-md: 500 16px/24px 'Roboto', system-ui, sans-serif;
+	--md-type-body-lg: 400 16px/24px 'Roboto', system-ui, sans-serif;
+	--md-type-body-md: 400 14px/20px 'Roboto', system-ui, sans-serif;
+	--md-type-label-lg: 500 14px/20px 'Roboto', system-ui, sans-serif;
+	--md-type-label-md: 500 12px/16px 'Roboto', system-ui, sans-serif;
+}
+
+
+/* ---------------------------------------------------------------------
+ * Material You overrides.
+ *
+ * Applied only when theme.js has confirmed the manager actually provided
+ * a palette (it sets data-monet="on"), so a missing or partial injection
+ * can never leave a token undefined. Each var still carries an M3
+ * baseline fallback as a second line of defence.
+ *
+ * --md-success has no Monet counterpart, so it deliberately keeps its
+ * static value in both schemes.
+ * ------------------------------------------------------------------- */
+:root[data-monet="on"] {
+	--md-primary: var(--primary, #6750A4);
+	--md-on-primary: var(--onPrimary, #FFFFFF);
+	--md-primary-container: var(--primaryContainer, #EADDFF);
+	--md-on-primary-container: var(--onPrimaryContainer, #4F378B);
+	--md-secondary: var(--secondary, #625B71);
+	--md-on-secondary: var(--onSecondary, #FFFFFF);
+	--md-secondary-container: var(--secondaryContainer, #E8DEF8);
+	--md-on-secondary-container: var(--onSecondaryContainer, #4A4458);
+	--md-tertiary: var(--tertiary, #7D5260);
+	--md-on-tertiary: var(--onTertiary, #FFFFFF);
+	--md-tertiary-container: var(--tertiaryContainer, #FFD8E4);
+	--md-on-tertiary-container: var(--onTertiaryContainer, #633B48);
+	--md-error: var(--error, #B3261E);
+	--md-on-error: var(--onError, #FFFFFF);
+	--md-error-container: var(--errorContainer, #F9DEDC);
+	--md-on-error-container: var(--onErrorContainer, #8C1D18);
+	--md-background: var(--background, #FEF7FF);
+	--md-on-background: var(--onBackground, #1D1B20);
+	--md-surface: var(--surface, #FEF7FF);
+	--md-on-surface: var(--onSurface, #1D1B20);
+	--md-surface-variant: var(--surfaceVariant, #E7E0EC);
+	--md-on-surface-variant: var(--onSurfaceVariant, #49454F);
+	--md-outline: var(--outline, #79747E);
+	--md-outline-variant: var(--outlineVariant, #CAC4D0);
+	--md-shadow: var(--shadow, #000000);
+}
+
+:root[data-theme="dark"][data-monet="on"] {
+	--md-primary: var(--primary, #D0BCFF);
+	--md-on-primary: var(--onPrimary, #381E72);
+	--md-primary-container: var(--primaryContainer, #4F378B);
+	--md-on-primary-container: var(--onPrimaryContainer, #EADDFF);
+	--md-secondary: var(--secondary, #CCC2DC);
+	--md-on-secondary: var(--onSecondary, #332D41);
+	--md-secondary-container: var(--secondaryContainer, #4A4458);
+	--md-on-secondary-container: var(--onSecondaryContainer, #E8DEF8);
+	--md-tertiary: var(--tertiary, #EFB8C8);
+	--md-on-tertiary: var(--onTertiary, #492532);
+	--md-tertiary-container: var(--tertiaryContainer, #633B48);
+	--md-on-tertiary-container: var(--onTertiaryContainer, #FFD8E4);
+	--md-error: var(--error, #F2B8B5);
+	--md-on-error: var(--onError, #601410);
+	--md-error-container: var(--errorContainer, #8C1D18);
+	--md-on-error-container: var(--onErrorContainer, #F9DEDC);
+	--md-background: var(--background, #141218);
+	--md-on-background: var(--onBackground, #E6E0E9);
+	--md-surface: var(--surface, #141218);
+	--md-on-surface: var(--onSurface, #E6E0E9);
+	--md-surface-variant: var(--surfaceVariant, #49454F);
+	--md-on-surface-variant: var(--onSurfaceVariant, #CAC4D0);
+	--md-outline: var(--outline, #938F99);
+	--md-outline-variant: var(--outlineVariant, #49454F);
+	--md-shadow: var(--shadow, #000000);
+}
+
+
+/* ---------------------------------------------------------------------
+ * Elevation ladder for Material You.
+ *
+ * The accent colours above are taken from Monet verbatim, but the surface
+ * container tones are NOT. Some devices report a pure-black surface with
+ * near-identical container tones, which flattens every card, the nav bar
+ * and the top bar into the background - the UI loses all its depth even
+ * though the colours are "correct".
+ *
+ * Instead each level is derived from the Monet surface by mixing in
+ * on-surface, which is M3's own elevation-overlay idea. That keeps the
+ * wallpaper hue while guaranteeing a visible step at every level, and it
+ * self-corrects for scheme: on-surface is light in dark mode (so levels
+ * lift) and dark in light mode (so they recede), matching M3 either way.
+ *
+ * Wrapped in @supports because a WebView without color-mix() would treat
+ * these as invalid at computed-value time and render the surfaces as
+ * nothing at all. Without support the plain Monet values above are used -
+ * flat, but never broken.
+ * ------------------------------------------------------------------- */
+@supports (background: color-mix(in srgb, red 50%, blue)) {
+	:root[data-monet="on"] {
+		--md-surface-container-lowest: color-mix(in srgb, var(--md-surface) 96%, #000000 4%);
+		--md-surface-container-low: color-mix(in srgb, var(--md-surface) 93%, var(--md-on-surface) 7%);
+		--md-surface-container: color-mix(in srgb, var(--md-surface) 89%, var(--md-on-surface) 11%);
+		--md-surface-container-high: color-mix(in srgb, var(--md-surface) 84%, var(--md-on-surface) 16%);
+		--md-surface-container-highest: color-mix(in srgb, var(--md-surface) 78%, var(--md-on-surface) 22%);
+
+		/* Verified against the static palette: these percentages give the
+		   same card/background separation it had (1.09:1) and slightly
+		   more above it, which a pure-black surface needs. */
+	}
+}

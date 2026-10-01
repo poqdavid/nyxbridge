@@ -1,0 +1,244 @@
+name: Build
+
+# Builds the flashable module zip from module/ on every push and PR.
+#   - A plain push to main sends the zip to Telegram as a CI build.
+#   - A v* tag additionally publishes a GitHub Release, sends the zip to
+#     Telegram as a Release build, and refreshes update.json.
+#
+#   module/                 <- all flashable files (module.prop + verify.sh at its root)
+#   scripts/gen-hashes.sh   <- writes per-file .sha256 sidecars at build time
+#   LICENSE, NOTICE.md      <- copied into the zip at build time
+#   update.json             <- refreshed automatically on tagged releases
+#   .github/workflows/build.yml
+#
+# Secrets used by the Telegram step (Settings -> Secrets and variables -> Actions):
+#   TELEGRAM_BOT_TOKEN   bot token from @BotFather
+#   TELEGRAM_CHAT_ID     target channel/chat id (e.g. @yourchannel or -100...)
+
+on:
+    push:
+        branches: [main]
+        tags: ['v*']
+    pull_request:
+        branches: [main]
+    workflow_dispatch:
+
+permissions:
+    contents: write # needed to create releases and commit update.json
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0 # full history + tags, needed for the Telegram changelog
+
+            - name: Read module version
+              id: mod
+              run: |
+                  PROP=module/module.prop
+                  if [ ! -f "$PROP" ]; then
+                    echo "::error::$PROP not found — the flashable files must live in module/"
+                    exit 1
+                  fi
+                  VERSION=$(sed -n 's/^version=//p'      "$PROP" | head -n1)
+                  VERSION_CODE=$(sed -n 's/^versionCode=//p' "$PROP" | head -n1)
+                  DESCRIPTION=$(sed -n 's/^description=//p' "$PROP" | head -n1)
+                  if [ -z "$VERSION" ] || [ -z "$VERSION_CODE" ]; then
+                    echo "::error::version / versionCode missing in module.prop"
+                    exit 1
+                  fi
+                  ZIP="${{ github.event.repository.name }}-${VERSION}.zip"
+                  echo "version=$VERSION"           >> "$GITHUB_OUTPUT"
+                  echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+                  echo "zip=$ZIP"                   >> "$GITHUB_OUTPUT"
+                  echo "description=$DESCRIPTION"   >> "$GITHUB_OUTPUT"
+                  echo "Version: $VERSION (code $VERSION_CODE) -> $ZIP"
+
+            - name: Verify tag matches module.prop (tag builds only)
+              if: startsWith(github.ref, 'refs/tags/')
+              run: |
+                  if [ "${{ github.ref_name }}" != "${{ steps.mod.outputs.version }}" ]; then
+                    echo "::error::tag '${{ github.ref_name }}' != module.prop version '${{ steps.mod.outputs.version }}'"
+                    exit 1
+                  fi
+
+            - name: Bundle license and notices
+              # AGPL-3.0 has to travel with the program, so the flashable zip
+              # carries its own copy. Copied at build time so the repo keeps a
+              # single LICENSE / NOTICE.md (the copies are git-ignored).
+              run: cp LICENSE NOTICE.md module/
+
+            - name: Generate per-file integrity hashes
+              run: sh scripts/gen-hashes.sh module
+
+            - name: Package flashable zip
+              id: pkg
+              run: |
+                  cd module
+                  # module.prop MUST sit at the zip root or KSU/Magisk won't see it.
+                  test -f module.prop
+                  zip -r9 "../${{ steps.mod.outputs.zip }}" . \
+                    -x '*.DS_Store' -x '__MACOSX/*' -x '*/.git*'
+                  cd ..
+                  SHA=$(sha256sum "${{ steps.mod.outputs.zip }}" | awk '{print $1}')
+                  echo "$SHA  ${{ steps.mod.outputs.zip }}" > "${{ steps.mod.outputs.zip }}.sha256"
+                  echo "zip_sha256=$SHA" >> "$GITHUB_OUTPUT"
+                  echo "----- zip contents -----"
+                  unzip -l "${{ steps.mod.outputs.zip }}"
+                  echo "zip SHA-256: $SHA"
+
+            - name: Upload build artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ github.event.repository.name }}-${{ steps.mod.outputs.version }}
+                  path: |
+                      ${{ steps.mod.outputs.zip }}
+                      ${{ steps.mod.outputs.zip }}.sha256
+                  if-no-files-found: error
+                  compression-level: 0
+
+            # ---------- CI-only (runs on plain pushes to main, not tags) ----------
+            - name: Send CI build to Telegram
+              if: github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/')
+              env:
+                  TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+                  TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+                  ZIP: ${{ steps.mod.outputs.zip }}
+                  RUN_NUMBER: ${{ github.run_number }}
+                  RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+              run: |
+                  if [ -z "$TG_TOKEN" ]; then
+                    echo "Telegram secrets not set; skipping notification."
+                    exit 0
+                  fi
+
+                  echo "Looking for zip at: $(pwd)/$ZIP"
+                  if [ ! -f "$ZIP" ]; then
+                    echo "::error::Zip not found at $(pwd)/$ZIP — skipping Telegram send."
+                    echo "Workspace contents:"
+                    ls -la
+                    exit 0
+                  fi
+
+                  # Escape for Telegram's HTML parse_mode (only &, <, > need it).
+                  esc() { sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'; }
+
+                  SHORT_SHA=$(git rev-parse --short HEAD)
+                  SUBJECT=$(git log -1 --pretty=%s | esc)
+
+                  CAPTION="<b>NyxBridge CI Build #${RUN_NUMBER}: ${SHORT_SHA}</b>"
+                  CAPTION+=$'\n\n'"${SUBJECT}"
+                  CAPTION+=$'\n\n'"<a href=\"${RUN_URL}\">View Run</a>"
+
+                  if curl -sS -f \
+                      -F document=@"$ZIP" \
+                      --form-string chat_id="$TG_CHAT" \
+                      --form-string parse_mode="HTML" \
+                      --form-string caption="$CAPTION" \
+                      "https://api.telegram.org/bot${TG_TOKEN}/sendDocument" >/dev/null; then
+                    echo "Sent $ZIP to Telegram (CI build)."
+                  else
+                    echo "::warning::Telegram send failed (CI build)."
+                  fi
+
+            # ---------- release-only (runs on v* tags) ----------
+            - name: Publish GitHub Release
+              if: startsWith(github.ref, 'refs/tags/')
+              uses: softprops/action-gh-release@v2
+              with:
+                  name: ${{ steps.mod.outputs.version }}
+                  tag_name: ${{ github.ref_name }}
+                  files: |
+                      ${{ steps.mod.outputs.zip }}
+                      ${{ steps.mod.outputs.zip }}.sha256
+                  generate_release_notes: true
+                  fail_on_unmatched_files: true
+
+            - name: Send Release build to Telegram
+              if: startsWith(github.ref, 'refs/tags/')
+              env:
+                  TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+                  TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+                  ZIP: ${{ steps.mod.outputs.zip }}
+                  VERSION: ${{ steps.mod.outputs.version }}
+                  TAG: ${{ github.ref_name }}
+                  RELEASE_URL: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
+              run: |
+                  if [ -z "$TG_TOKEN" ]; then
+                    echo "Telegram bot token not set; skipping notification."
+                    exit 0
+                  fi
+
+                  echo "Looking for zip at: $(pwd)/$ZIP"
+                  if [ ! -f "$ZIP" ]; then
+                    echo "::error::Zip not found at $(pwd)/$ZIP — skipping Telegram send."
+                    echo "Workspace contents:"
+                    ls -la
+                    exit 0
+                  fi
+
+                  # Escape for Telegram's HTML parse_mode (only &, <, > need it).
+                  esc() { sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'; }
+
+                  # Changelog = commit subjects since the previous tag (falls back to
+                  # the latest commit if this is the first tag). Capped so the
+                  # caption stays well under Telegram's 1024-char limit.
+                  PREV_TAG=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)
+                  if [ -n "$PREV_TAG" ]; then
+                    RANGE="${PREV_TAG}..${TAG}"
+                  else
+                    RANGE="$TAG"
+                  fi
+                  CHANGELOG=$(git log --pretty=format:'- %s' "$RANGE" | head -n 20 | esc)
+                  if [ -z "$CHANGELOG" ]; then
+                    CHANGELOG="- $(git log -1 --pretty=%s | esc)"
+                  fi
+
+                  CAPTION="<b>NyxBridge ${VERSION}</b>"
+
+                  CAPTION+=$'\n\n'"${CHANGELOG}"
+                  CAPTION+=$'\n\n'"<a href=\"${RELEASE_URL}\">Release Notes</a>"
+
+                  if curl -sS -f \
+                      -F document=@"$ZIP" \
+                      --form-string chat_id="$TG_CHAT" \
+                      --form-string parse_mode="HTML" \
+                      --form-string caption="$CAPTION" \
+                      "https://api.telegram.org/bot${TG_TOKEN}/sendDocument" >/dev/null; then
+                    echo "Sent $ZIP to Telegram (release)."
+                  else
+                    echo "::warning::Telegram send failed (release still published)."
+                  fi
+
+            - name: Refresh update.json on the default branch
+              if: startsWith(github.ref, 'refs/tags/')
+              env:
+                  REPO: ${{ github.repository }}
+                  TAG: ${{ github.ref_name }}
+                  VERSION: ${{ steps.mod.outputs.version }}
+                  VERSION_CODE: ${{ steps.mod.outputs.version_code }}
+                  ZIP: ${{ steps.mod.outputs.zip }}
+                  DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+              run: |
+                  git config user.name  "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git fetch origin "$DEFAULT_BRANCH"
+                  git checkout "$DEFAULT_BRANCH"
+                  cat > update.json <<EOF
+                  {
+                    "version": "$VERSION",
+                    "versionCode": $VERSION_CODE,
+                    "zipUrl": "https://github.com/$REPO/releases/download/$TAG/$ZIP",
+                    "changelog": "https://raw.githubusercontent.com/$REPO/$DEFAULT_BRANCH/CHANGELOG.md"
+                  }
+                  EOF
+                  if git diff --quiet -- update.json; then
+                    echo "update.json already up to date"
+                  else
+                    git add update.json
+                    git commit -m "ci: bump update.json to $VERSION"
+                    git push origin "$DEFAULT_BRANCH"
+                  fi
