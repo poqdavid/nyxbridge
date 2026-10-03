@@ -1,7 +1,7 @@
 id=nyxbridge
 name=NyxBridge
-version=v1.0.0
-versionCode=100
+version=v1.0.1
+versionCode=101
 author=poqdavid
 description=[Status: Waiting for reboot] Puts the phone on VirtualAP's managed-mode hotspot bridge so its apps can reach hotspot devices, with a Material You WebUI.
 updateJson=https://raw.githubusercontent.com/poqdavid/nyxbridge/main/update.json

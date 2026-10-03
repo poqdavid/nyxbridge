@@ -64,6 +64,8 @@ ip rule add pref 7001 to 192.168.42.0/24 lookup main
 
 Priority 7001 sits ahead of netd's and any VPN's rules, and next to VirtualAP's own 7000/7010 without touching them. Traffic to anything outside the hotspot subnet never matches it.
 
+With the **IPv6** switch on, NyxBridge also turns IPv6 on for the bridge (VirtualAP 2.0.5 and later create it with IPv6 off), accepts OpenWrt's router advertisements without their default route, and adds `to <prefix> lookup <table>` rules for the prefixes OpenWrt announces, at the same priority. Android files those routes in a per-interface table (1000 + the bridge's interface index), so the rules point there. Turning the switch off puts back the bridge's original IPv6 settings.
+
 While monitoring is on, a watcher listens to `ip monitor link address` and re-checks within about a second whenever the bridge changes (VirtualAP recreates it on every start). It also re-checks every 30 seconds, because netd flushes all policy rules when it restarts. Every check is idempotent and only logs changes. The module's description in the manager shows the current state.
 
 ---

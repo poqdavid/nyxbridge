@@ -19,6 +19,7 @@ IP_BIN=${NYXB_IP_BIN:-/system/bin/ip}
 SH_BIN=${NYXB_SH_BIN:-/system/bin/sh}
 SYS_NET=${NYXB_SYS_NET:-/sys/class/net}
 PROC_V6=${NYXB_PROC_V6:-/proc/sys/net/ipv6/conf}
+CGROUP_ROOTS=${NYXB_CGROUP_ROOTS:-/acct /dev/cg2_bpf /sys/fs/cgroup /dev/memcg/apps}
 
 MODULE_PROP=${NYXB_MODULE_PROP:-$MODDIR/module.prop}
 CONF=$DATA_DIR/config.sh
@@ -171,19 +172,21 @@ load_applied() {
     kv_set A4_IDX "$APPLIED" A4_IDX
     kv_set A6_BR "$APPLIED" A6_BR
     kv_set A6_IDX "$APPLIED" A6_IDX
+    kv_set A6_ORIG "$APPLIED" A6_ORIG
     kv_set SIG6 "$APPLIED" SIG6
-    APPLIED_WAS="$A4_ADDR|$A4_BR|$A4_IDX|$A6_BR|$A6_IDX|$SIG6"
+    APPLIED_WAS="$A4_ADDR|$A4_BR|$A4_IDX|$A6_BR|$A6_IDX|$A6_ORIG|$SIG6"
 }
 
 save_applied() {
     [ -f "$APPLIED" ] \
-        && [ "$A4_ADDR|$A4_BR|$A4_IDX|$A6_BR|$A6_IDX|$SIG6" = "$APPLIED_WAS" ] && return 0
+        && [ "$A4_ADDR|$A4_BR|$A4_IDX|$A6_BR|$A6_IDX|$A6_ORIG|$SIG6" = "$APPLIED_WAS" ] && return 0
     {
         echo "A4_ADDR=$A4_ADDR"
         echo "A4_BR=$A4_BR"
         echo "A4_IDX=$A4_IDX"
         echo "A6_BR=$A6_BR"
         echo "A6_IDX=$A6_IDX"
+        echo "A6_ORIG=$A6_ORIG"
         echo "SIG6=$SIG6"
     } > "$APPLIED.tmp" && mv -f "$APPLIED.tmp" "$APPLIED"
 }
@@ -229,23 +232,65 @@ has_v6_global() {
     "$IP_BIN" -6 -o addr show dev "$1" scope global 2> /dev/null | grep -q inet6
 }
 
+v6_get() {
+    local _v6=''
+    { read -r _v6 < "$PROC_V6/$2/$3"; } 2> /dev/null
+    eval "$1=\$_v6"
+}
+
+v6_snapshot() {
+    local d r f a
+    v6_get d "$1" disable_ipv6
+    v6_get r "$1" accept_ra
+    v6_get f "$1" accept_ra_defrtr
+    v6_get a "$1" autoconf
+    is_num "$d" 0 1 && is_num "$r" 0 2 && is_num "$f" 0 1 && is_num "$a" 0 1 || return 1
+    echo "$d,$r,$f,$a"
+}
+
+v6_knobs_ok() {
+    local d r f a
+    v6_get d "$1" disable_ipv6
+    v6_get r "$1" accept_ra
+    v6_get f "$1" accept_ra_defrtr
+    v6_get a "$1" autoconf
+    [ "$d,$r,$f,$a" = "0,2,0,1" ]
+}
+
 v6_prepare() {
-    local p="$PROC_V6/$1"
-    echo 0 > "$p/disable_ipv6" 2> /dev/null
+    local p="$PROC_V6/$1" d
     echo 2 > "$p/accept_ra" 2> /dev/null
     echo 0 > "$p/accept_ra_defrtr" 2> /dev/null
     echo 1 > "$p/autoconf" 2> /dev/null
-    if ! has_v6_global "$1"; then
+    "$IP_BIN" -6 route flush exact ::/0 dev "$1" proto ra table all > /dev/null 2>&1
+    v6_get d "$1" disable_ipv6
+    if [ "$d" != 0 ]; then
+        echo 0 > "$p/disable_ipv6" 2> /dev/null
+    elif ! has_v6_global "$1"; then
         echo 1 > "$p/disable_ipv6" 2> /dev/null
         echo 0 > "$p/disable_ipv6" 2> /dev/null
     fi
 }
 
 v6_restore() {
-    local p="$PROC_V6/$1" d="$PROC_V6/default" k
-    for k in accept_ra accept_ra_defrtr autoconf; do
-        [ -f "$d/$k" ] && cat "$d/$k" > "$p/$k" 2> /dev/null
-    done
+    local p="$PROC_V6/$1" dis ra rtr auto rest k
+    dis=${2%%,*}
+    rest=${2#*,}
+    ra=${rest%%,*}
+    rest=${rest#*,}
+    rtr=${rest%%,*}
+    auto=${rest#*,}
+    if [ "$dis,$ra,$rtr,$auto" = "$2" ] && is_num "$dis" 0 1 && is_num "$ra" 0 2 \
+        && is_num "$rtr" 0 1 && is_num "$auto" 0 1; then
+        if [ "$dis" = 1 ]; then echo 1 > "$p/disable_ipv6" 2> /dev/null; fi
+        echo "$ra" > "$p/accept_ra" 2> /dev/null
+        echo "$rtr" > "$p/accept_ra_defrtr" 2> /dev/null
+        echo "$auto" > "$p/autoconf" 2> /dev/null
+    else
+        for k in accept_ra accept_ra_defrtr autoconf; do
+            [ -f "$PROC_V6/default/$k" ] && cat "$PROC_V6/default/$k" > "$p/$k" 2> /dev/null
+        done
+    fi
     "$IP_BIN" -6 addr flush dev "$1" scope global dynamic 2> /dev/null
 }
 
@@ -283,10 +328,10 @@ remove_all() {
             && log_msg "Removed $A4_ADDR from $A4_BR"
     fi
     if [ -n "$A6_IDX" ] && same_instance "$A6_BR" "$A6_IDX"; then
-        v6_restore "$A6_BR"
+        v6_restore "$A6_BR" "$A6_ORIG"
         log_msg "IPv6 settings on $A6_BR restored"
     fi
-    A4_ADDR='' A4_BR='' A4_IDX='' A6_BR='' A6_IDX='' SIG6=''
+    A4_ADDR='' A4_BR='' A4_IDX='' A6_BR='' A6_IDX='' A6_ORIG='' SIG6=''
 }
 
 apply_v4() {
@@ -328,9 +373,13 @@ apply_v6() {
         return 1
     fi
     if [ -z "$A6_IDX" ]; then
+        A6_ORIG=$(v6_snapshot "$br")
         v6_prepare "$br"
         A6_BR=$br A6_IDX=$idx
         log_msg "IPv6 on: $br now accepts OpenWrt's router advertisements (no default route)"
+    elif ! v6_knobs_ok "$br"; then
+        v6_prepare "$br"
+        log_msg "IPv6 settings on $br were changed by something else; set them again"
     fi
     targets=$(v6_targets "$br")
     sig=$(printf '%s' "$targets" | tr '\n' ';')
@@ -362,10 +411,10 @@ remove_v6_only() {
     fi
     if [ -n "$A6_IDX" ]; then
         if same_instance "$A6_BR" "$A6_IDX"; then
-            v6_restore "$A6_BR"
+            v6_restore "$A6_BR" "$A6_ORIG"
             log_msg "IPv6 off: settings on $A6_BR restored"
         fi
-        A6_BR='' A6_IDX='' SIG6=''
+        A6_BR='' A6_IDX='' A6_ORIG='' SIG6=''
     fi
 }
 
@@ -446,7 +495,7 @@ reconcile() {
         idx=$(if_index "$br")
         if [ "$A4_BR" != "$br" ] || [ "$A4_IDX" != "$idx" ]; then A4_ADDR=; fi
         if [ "$A6_BR" != "$br" ] || [ "$A6_IDX" != "$idx" ]; then
-            A6_BR='' A6_IDX='' SIG6=''
+            A6_BR='' A6_IDX='' A6_ORIG='' SIG6=''
         fi
         if ! apply_v4 "$br" "$base" "$idx"; then
             STATE=error
@@ -505,6 +554,23 @@ reconcile_locked() {
     lock_acquire "$RUN_DIR/reconcile.pid" || return 1
     reconcile
     rm -f "$RUN_DIR/reconcile.pid"
+}
+
+in_app_cgroup() {
+    grep -q '/uid_[0-9]' "/proc/$1/cgroup" 2> /dev/null
+}
+
+leave_app_cgroups() {
+    local g
+    in_app_cgroup $$ || return 0
+    for g in $CGROUP_ROOTS; do
+        if [ -f "$g/cgroup.procs" ]; then echo $$ > "$g/cgroup.procs" 2> /dev/null; fi
+    done
+    if in_app_cgroup $$; then
+        log_msg "Watcher is still in the root manager's app cgroup; it may stop when the manager closes"
+        return 1
+    fi
+    log_msg "Watcher moved out of the root manager's app cgroup"
 }
 
 daemon_pid() {

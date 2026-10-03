@@ -1,5 +1,19 @@
 # Changelog
 
+## [v1.0.1] - 2026-10-03
+
+### 🌐 IPv6 with VirtualAP 2.0.5
+
+VirtualAP 2.0.5 hands hotspot clients IPv6 from the OpenWrt container and creates `vap-br0` with IPv6 switched off, so the phone stays off that network. NyxBridge's IPv6 switch is how you opt the phone back in, without a default route through OpenWrt.
+
+* **Switching off restores VirtualAP's setting.** Turning the IPv6 switch off, turning NyxBridge off, disabling the module or uninstalling it now puts back exactly the IPv6 settings the bridge had before, including VirtualAP's "IPv6 off". Before, it left IPv6 on with Android's defaults, so the phone took an address and a default route from OpenWrt's advertisements.
+* **No default route, not even briefly.** The router-advertisement settings are in place before IPv6 comes on, so an advertisement arriving in between can't install one. With VirtualAP versions before 2.0.5, which left IPv6 on, the default route the phone had already taken from OpenWrt is removed when the switch comes on.
+* **Settings stay put.** Every check puts the bridge's IPv6 settings back if something else changed them, and logs it.
+
+### 🐛 Fixes
+
+* **A watcher started from the WebUI stopped later.** On KernelSU, SukiSU-Ultra and KernelSU-Next before 3.2, the WebUI's root shell runs inside the root manager's app cgroup. A watcher started with the Monitoring switch or Start watcher was frozen along with the manager once it went to the background, and killed with it, after which the WebUI showed "On, but the watcher isn't running". The watcher now moves itself out of the manager's cgroups when it starts, as KernelSU-Next 3.2 does for its WebUI shells. A watcher started at boot was never affected.
+
 ## [v1.0.0] - 2026-10-01
 
 First release.

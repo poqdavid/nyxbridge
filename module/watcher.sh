@@ -20,6 +20,8 @@ if ! monitor_enabled; then
     exit 0
 fi
 
+leave_app_cgroups
+
 FIFO="$RUN_DIR/events"
 rm -f "$FIFO"
 if ! mkfifo -m 600 "$FIFO"; then
