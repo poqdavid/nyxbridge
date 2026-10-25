@@ -25,8 +25,9 @@ The WebUI framework (`webui/src/core/`: the manager bridge, i18n, theme,
 fullscreen, keyboard, sheet, dialog and icons; `css/tokens.css` and the
 base of `css/app.css`), the WebUI build (`webui/build.mjs`,
 `webui/tsconfig.json`), the installer's integrity check
-(`module/verify.sh`), `scripts/gen-hashes.sh` and the build workflow come
-from **NyxSUSFS** (<https://github.com/poqdavid/nyxsusfs>) and **NyxProps**
+(`module/verify.sh`), `scripts/gen-hashes.sh`, the build workflow and its
+Telegram post (`.github/scripts/telegram.py`) come from **NyxSUSFS**
+(<https://github.com/poqdavid/nyxsusfs>) and **NyxProps**
 (<https://github.com/poqdavid/nyxprops>) by the same author, under the same
 license.
 
@@ -49,6 +50,8 @@ license.
   re-applies the setup when the network underneath it is recreated.
   NyxBridge implements these in its own code; none of droidspaces-lan-ip's
   code is included.
+- **Duck ToolBox** by Eltavine, MIT — <https://github.com/eltavine/Duck-ToolBox>:
+  the Telegram build caption.
 
 ## Icons
 

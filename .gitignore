@@ -17,3 +17,6 @@ module/bin/nyxbridge
 # OS / editor cruft
 .DS_Store
 Thumbs.db
+
+# Python bytecode from the CI test scripts
+__pycache__/
