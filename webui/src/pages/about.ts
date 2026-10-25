@@ -1,5 +1,5 @@
 import { MOD_DIR, PERSISTENT_DIR, setSetting } from '../bridge-data';
-import type { AppState } from '../context';
+import type { AppState, PageContext } from '../context';
 import { $ } from '../core/dom';
 import { applyFullscreen, fullScreenAvailable } from '../core/fullscreen';
 import { nextPaint } from '../core/ksu-bridge';
@@ -15,7 +15,7 @@ function switchHtml(role: string): string {
 		</label>`;
 }
 
-export function buildAbout(root: HTMLElement): void {
+export function buildAbout(root: HTMLElement, ctx: PageContext): void {
 	root.innerHTML = `
 		<div class="card about-head">
 			<div class="about-head__name" data-role="name">NyxBridge</div>
@@ -74,8 +74,15 @@ export function buildAbout(root: HTMLElement): void {
 		</div>
 	`;
 
+	// Every redraw (a live update, Check now) renders from state.config, so it
+	// has to hold what was just chosen, not what was read when the page opened.
+	const remember = (key: string, value: string) => {
+		ctx.state.config[key] = value;
+	};
+
 	$(root, '[data-role="theme"]').addEventListener('change', async (e) => {
 		const mode = (e.target as HTMLSelectElement).value;
+		remember('webui_theme', mode);
 		const effective = await applyTheme(mode);
 		updateThemeHint(root, mode, effective);
 		await nextPaint();
@@ -85,6 +92,7 @@ export function buildAbout(root: HTMLElement): void {
 	$(root, '[data-role="monet"]').addEventListener('change', async (e) => {
 		const sw = e.target as HTMLInputElement;
 		const wanted = sw.checked;
+		remember('webui_monet', wanted ? '1' : '0');
 		const { enabled, available } = await applyMonet(wanted);
 		sw.checked = enabled;
 		updateMonetHint(root, available);
@@ -95,6 +103,7 @@ export function buildAbout(root: HTMLElement): void {
 	$(root, '[data-role="fullscreen"]').addEventListener('change', async (e) => {
 		const sw = e.target as HTMLInputElement;
 		const applied = applyFullscreen(sw.checked);
+		remember('webui_fullscreen', applied ? '1' : '0');
 		sw.checked = applied;
 		await nextPaint();
 		await setSetting('webui_fullscreen', applied ? 1 : 0);
