@@ -1,0 +1,41 @@
+{
+ "scenario": "binary-broken",
+ "steps": [
+  {
+   "step": "before boot",
+   "net": {
+    "rules4": [],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [],
+     "routes": [],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   }
+  },
+  {
+   "step": "boot",
+   "exit": 0,
+   "output": "",
+   "calls": [],
+   "changed": {
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "<time> [error] bin/nyxbridge can't run on this device\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [],
+     "routes": [],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 0
+  }
+ ]
+}

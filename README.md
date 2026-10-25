@@ -106,6 +106,12 @@ The bridge logic is **Rust** (`src/`), using the standard library only: `bin/nyx
 
 ---
 
+## 🧪 Tests
+
+The boot and watcher behaviour, the WebUI and the installer are tested in CI on every push. See [tests/README.md](tests/README.md) to run the tests locally.
+
+---
+
 ## 🔗 Additional Resources
 
 - 📡 [VirtualAP](https://github.com/ravindu644/VirtualAP)

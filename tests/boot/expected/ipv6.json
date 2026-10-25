@@ -1,0 +1,291 @@
+{
+ "scenario": "ipv6",
+ "steps": [
+  {
+   "step": "before boot",
+   "net": {
+    "rules4": [],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [],
+     "routes": [],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   }
+  },
+  {
+   "step": "boot",
+   "exit": 0,
+   "output": "",
+   "calls": [],
+   "changed": {
+    "/data/adb/modules/nyxbridge/module.prop": [
+     "0o644",
+     "0:0",
+     "id=nyxbridge\nname=NyxBridge\nversion=<module.prop>\nversionCode=<module.prop>\nauthor=poqdavid\ndescription=[✅ Active] 192.168.42.2 on vap-br0 — details in the WebUI\nupdateJson=https://raw.githubusercontent.com/poqdavid/nyxbridge/main/update.json\n"
+    ],
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "<time> Watcher started (pid <pid>)\n<time> Added 192.168.42.2/24 to vap-br0\n<time> Added rule 7001: to 192.168.42.0/24 lookup main\n<time> IPv6 on: vap-br0 now accepts OpenWrt's router advertisements (no default route)\n<time> IPv6 rules: oif vap-br0 lookup main\n<time> Active on vap-br0\n"
+    ],
+    "/dev/nyxbridge": [
+     "0o700",
+     "0:0",
+     null
+    ],
+    "/dev/nyxbridge/applied": [
+     "0o644",
+     "0:0",
+     "A4_ADDR=192.168.42.2/24\nA4_BR=vap-br0\nA4_IDX=<ifindex of vap-br0>\nA6_BR=vap-br0\nA6_IDX=<ifindex of vap-br0>\nA6_ORIG=1,1,1,1\nSIG6=oif vap-br0 lookup main\nPREF=7001\n"
+    ],
+    "/dev/nyxbridge/daemon.lock": [
+     "0o644",
+     "0:0",
+     ""
+    ],
+    "/dev/nyxbridge/daemon.pid": [
+     "0o644",
+     "0:0",
+     "<pid> <start time>"
+    ],
+    "/dev/nyxbridge/reconcile.lock": [
+     "0o644",
+     "0:0",
+     ""
+    ],
+    "/dev/nyxbridge/status": [
+     "0o644",
+     "0:0",
+     "state=active\nreason=\nreason_code=\nreason_arg=\ntime=<time>\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7001: from all to 192.168.42.0/24 lookup main"
+    ],
+    "rules6": [
+     "7001: from all oif vap-br0 lookup main"
+    ],
+    "vap-br0": {
+     "addrs": [
+      "inet 192.168.42.2/24"
+     ],
+     "routes": [
+      "192.168.42.0/24 proto kernel table main",
+      "fe80::/64 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=0,accept_ra=2,accept_ra_defrtr=0,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "OpenWrt announces a prefix",
+   "calls": [],
+   "changed": {
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "+<time> IPv6 rules: oif vap-br0 lookup main, to fd00:42::/64 lookup main, to fd00:43::/48 lookup main\n"
+    ],
+    "/dev/nyxbridge/applied": [
+     "0o644",
+     "0:0",
+     "A4_ADDR=192.168.42.2/24\nA4_BR=vap-br0\nA4_IDX=<ifindex of vap-br0>\nA6_BR=vap-br0\nA6_IDX=<ifindex of vap-br0>\nA6_ORIG=1,1,1,1\nSIG6=oif vap-br0 lookup main;to fd00:42::/64 lookup main;to fd00:43::/48 lookup main\nPREF=7001\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7001: from all to 192.168.42.0/24 lookup main"
+    ],
+    "rules6": [
+     "7001: from all oif vap-br0 lookup main",
+     "7001: from all to fd00:42::/64 lookup main",
+     "7001: from all to fd00:43::/48 lookup main"
+    ],
+    "vap-br0": {
+     "addrs": [
+      "inet 192.168.42.2/24",
+      "inet6 fd00:42::2:aff:fe00:10/64 dynamic"
+     ],
+     "routes": [
+      "192.168.42.0/24 proto kernel table main",
+      "fd00:42::/64 proto kernel table main",
+      "fd00:43::/48 via fe80::1 proto ra table main",
+      "fe80::/64 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=0,accept_ra=2,accept_ra_defrtr=0,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "something else changes accept_ra_defrtr, then Check now",
+   "exit": 0,
+   "output": "daemon=running\nmonitor=1\nmodule_disabled=0\nenabled=1\nipv6=1\nhost_octet=2\nrule_pref=7001\nva_mode=bridged\nbridge=vap-br0\ngateway=192.168.42.1\nbridge_present=1\nsubnet=192.168.42.0/24\nhost_ip=192.168.42.2\naddr4=1\nrule4=1\naddrs6=fd00:42::2:aff:fe00:10/64\nrules6=3\nstate=active\nreason=\nreason_code=\nreason_arg=\nchecked=<time>\nrestart_app=\nversion=<build>\n",
+   "calls": [],
+   "changed": {
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "+<time> IPv6 settings on vap-br0 were changed by something else; set them again\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7001: from all to 192.168.42.0/24 lookup main"
+    ],
+    "rules6": [
+     "7001: from all oif vap-br0 lookup main",
+     "7001: from all to fd00:42::/64 lookup main",
+     "7001: from all to fd00:43::/48 lookup main"
+    ],
+    "vap-br0": {
+     "addrs": [
+      "inet 192.168.42.2/24",
+      "inet6 fd00:42::2:aff:fe00:10/64 dynamic"
+     ],
+     "routes": [
+      "192.168.42.0/24 proto kernel table main",
+      "fd00:42::/64 proto kernel table main",
+      "fd00:43::/48 via fe80::1 proto ra table main",
+      "fe80::/64 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=0,accept_ra=2,accept_ra_defrtr=0,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "IPv6 off from the WebUI",
+   "exit": 0,
+   "output": "daemon=running\nmonitor=1\nmodule_disabled=0\nenabled=1\nipv6=0\nhost_octet=2\nrule_pref=7001\nva_mode=bridged\nbridge=vap-br0\ngateway=192.168.42.1\nbridge_present=1\nsubnet=192.168.42.0/24\nhost_ip=192.168.42.2\naddr4=1\nrule4=1\naddrs6=\nrules6=0\nstate=active\nreason=\nreason_code=\nreason_arg=\nchecked=<time>\nrestart_app=\nversion=<build>\n",
+   "calls": [],
+   "changed": {
+    "/data/adb/nyxbridge/config.sh": [
+     "0o600",
+     "0:0",
+     "enabled=1\nmonitor=1\nipv6=0\nhost_octet=2\nrule_pref=7001\nrestart_app=\nwebui_theme=system\nwebui_monet=1\nwebui_fullscreen=1"
+    ],
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "+<time> Setting changed: ipv6=0\n<time> Removed IPv6 rules 7001\n<time> IPv6 off: settings on vap-br0 restored\n"
+    ],
+    "/dev/nyxbridge/applied": [
+     "0o644",
+     "0:0",
+     "A4_ADDR=192.168.42.2/24\nA4_BR=vap-br0\nA4_IDX=<ifindex of vap-br0>\nA6_BR=\nA6_IDX=\nA6_ORIG=\nSIG6=\nPREF=7001\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7001: from all to 192.168.42.0/24 lookup main"
+    ],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [
+      "inet 192.168.42.2/24"
+     ],
+     "routes": [
+      "192.168.42.0/24 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "IPv6 on from the WebUI",
+   "exit": 0,
+   "output": "daemon=running\nmonitor=1\nmodule_disabled=0\nenabled=1\nipv6=1\nhost_octet=2\nrule_pref=7001\nva_mode=bridged\nbridge=vap-br0\ngateway=192.168.42.1\nbridge_present=1\nsubnet=192.168.42.0/24\nhost_ip=192.168.42.2\naddr4=1\nrule4=1\naddrs6=\nrules6=1\nstate=active\nreason=\nreason_code=\nreason_arg=\nchecked=<time>\nrestart_app=\nversion=<build>\n",
+   "calls": [],
+   "changed": {
+    "/data/adb/nyxbridge/config.sh": [
+     "0o600",
+     "0:0",
+     "enabled=1\nmonitor=1\nipv6=1\nhost_octet=2\nrule_pref=7001\nrestart_app=\nwebui_theme=system\nwebui_monet=1\nwebui_fullscreen=1"
+    ],
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "+<time> Setting changed: ipv6=1\n<time> IPv6 on: vap-br0 now accepts OpenWrt's router advertisements (no default route)\n<time> IPv6 rules: oif vap-br0 lookup main\n"
+    ],
+    "/dev/nyxbridge/applied": [
+     "0o644",
+     "0:0",
+     "A4_ADDR=192.168.42.2/24\nA4_BR=vap-br0\nA4_IDX=<ifindex of vap-br0>\nA6_BR=vap-br0\nA6_IDX=<ifindex of vap-br0>\nA6_ORIG=1,1,1,1\nSIG6=oif vap-br0 lookup main\nPREF=7001\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7001: from all to 192.168.42.0/24 lookup main"
+    ],
+    "rules6": [
+     "7001: from all oif vap-br0 lookup main"
+    ],
+    "vap-br0": {
+     "addrs": [
+      "inet 192.168.42.2/24"
+     ],
+     "routes": [
+      "192.168.42.0/24 proto kernel table main",
+      "fe80::/64 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=0,accept_ra=2,accept_ra_defrtr=0,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "turned off from the WebUI",
+   "exit": 0,
+   "output": "daemon=running\nmonitor=1\nmodule_disabled=0\nenabled=0\nipv6=1\nhost_octet=2\nrule_pref=7001\nva_mode=bridged\nbridge=vap-br0\ngateway=192.168.42.1\nbridge_present=1\nsubnet=192.168.42.0/24\nhost_ip=192.168.42.2\naddr4=0\nrule4=0\naddrs6=\nrules6=0\nstate=inactive\nreason=Turned off in settings\nreason_code=turned_off\nreason_arg=\nchecked=<time>\nrestart_app=\nversion=<build>\n",
+   "calls": [],
+   "changed": {
+    "/data/adb/modules/nyxbridge/module.prop": [
+     "0o644",
+     "0:0",
+     "id=nyxbridge\nname=NyxBridge\nversion=<module.prop>\nversionCode=<module.prop>\nauthor=poqdavid\ndescription=[💤 Idle] Turned off in settings — details in the WebUI\nupdateJson=https://raw.githubusercontent.com/poqdavid/nyxbridge/main/update.json\n"
+    ],
+    "/data/adb/nyxbridge/config.sh": [
+     "0o600",
+     "0:0",
+     "enabled=0\nmonitor=1\nipv6=1\nhost_octet=2\nrule_pref=7001\nrestart_app=\nwebui_theme=system\nwebui_monet=1\nwebui_fullscreen=1"
+    ],
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "+<time> Setting changed: enabled=0\n<time> Removed IPv4 rule 7001\n<time> Removed IPv6 rules 7001\n<time> Removed 192.168.42.2/24 from vap-br0\n<time> IPv6 settings on vap-br0 restored\n<time> inactive: Turned off in settings\n"
+    ],
+    "/dev/nyxbridge/applied": [
+     "0o644",
+     "0:0",
+     "A4_ADDR=\nA4_BR=\nA4_IDX=\nA6_BR=\nA6_IDX=\nA6_ORIG=\nSIG6=\nPREF=7001\n"
+    ],
+    "/dev/nyxbridge/status": [
+     "0o644",
+     "0:0",
+     "state=inactive\nreason=Turned off in settings\nreason_code=turned_off\nreason_arg=\ntime=<time>\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [],
+     "routes": [],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 1
+  }
+ ]
+}

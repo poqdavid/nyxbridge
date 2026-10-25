@@ -5,6 +5,7 @@
 	"private": true,
 	"devDependencies": {
 		"esbuild": "0.28.2",
+		"playwright": "1.64.1",
 		"prettier": "3.9.9",
 		"prettier-plugin-sh": "0.20.2",
 		"typescript": "7.0.2"
@@ -15,6 +16,7 @@
 		"format:rust": "cargo fmt",
 		"format:sh": "prettier --write \"**/*.sh\"",
 		"format:webui": "prettier --write \"webui/**/*.{ts,mjs}\"",
-		"format:check": "prettier --check \"webui/**/*.{ts,mjs}\" \"**/*.sh\""
+		"format:check": "prettier --check \"webui/**/*.{ts,mjs}\" \"**/*.sh\"",
+		"test:webui": "node tests/webui/run.cjs"
 	}
 }

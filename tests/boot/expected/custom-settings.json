@@ -1,0 +1,282 @@
+{
+ "scenario": "custom-settings",
+ "steps": [
+  {
+   "step": "before boot",
+   "net": {
+    "rules4": [],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [],
+     "routes": [],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   }
+  },
+  {
+   "step": "boot",
+   "exit": 0,
+   "output": "",
+   "calls": [],
+   "changed": {
+    "/data/adb/modules/nyxbridge/module.prop": [
+     "0o644",
+     "0:0",
+     "id=nyxbridge\nname=NyxBridge\nversion=<module.prop>\nversionCode=<module.prop>\nauthor=poqdavid\ndescription=[✅ Active] 10.42.0.50 on vap-br0 — details in the WebUI\nupdateJson=https://raw.githubusercontent.com/poqdavid/nyxbridge/main/update.json\n"
+    ],
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "<time> Watcher started (pid <pid>)\n<time> Added 10.42.0.50/24 to vap-br0\n<time> Added rule 6500: to 10.42.0.0/24 lookup main\n<time> Active on vap-br0\n"
+    ],
+    "/dev/nyxbridge": [
+     "0o700",
+     "0:0",
+     null
+    ],
+    "/dev/nyxbridge/applied": [
+     "0o644",
+     "0:0",
+     "A4_ADDR=10.42.0.50/24\nA4_BR=vap-br0\nA4_IDX=<ifindex of vap-br0>\nA6_BR=\nA6_IDX=\nA6_ORIG=\nSIG6=\nPREF=6500\n"
+    ],
+    "/dev/nyxbridge/daemon.lock": [
+     "0o644",
+     "0:0",
+     ""
+    ],
+    "/dev/nyxbridge/daemon.pid": [
+     "0o644",
+     "0:0",
+     "<pid> <start time>"
+    ],
+    "/dev/nyxbridge/reconcile.lock": [
+     "0o644",
+     "0:0",
+     ""
+    ],
+    "/dev/nyxbridge/status": [
+     "0o644",
+     "0:0",
+     "state=active\nreason=\nreason_code=\nreason_arg=\ntime=<time>\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [
+     "6500: from all to 10.42.0.0/24 lookup main"
+    ],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [
+      "inet 10.42.0.50/24"
+     ],
+     "routes": [
+      "10.42.0.0/24 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "rule priority 7002",
+   "exit": 0,
+   "output": "daemon=running\nmonitor=1\nmodule_disabled=0\nenabled=1\nipv6=0\nhost_octet=50\nrule_pref=7002\nva_mode=bridged\nbridge=vap-br0\ngateway=10.42.0.1\nbridge_present=1\nsubnet=10.42.0.0/24\nhost_ip=10.42.0.50\naddr4=1\nrule4=1\naddrs6=\nrules6=0\nstate=active\nreason=\nreason_code=\nreason_arg=\nchecked=<time>\nrestart_app=\nversion=<build>\n",
+   "calls": [],
+   "changed": {
+    "/data/adb/nyxbridge/config.sh": [
+     "0o600",
+     "0:0",
+     "enabled=1\nmonitor=1\nipv6=0\nhost_octet=50\nrule_pref=7002\nrestart_app=\nwebui_theme=system\nwebui_monet=1\nwebui_fullscreen=1"
+    ],
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "+<time> Setting changed: rule_pref=7002\n<time> Rule priority changed from 6500 to 7002; removed the rules at 6500\n<time> Added rule 7002: to 10.42.0.0/24 lookup main\n"
+    ],
+    "/dev/nyxbridge/applied": [
+     "0o644",
+     "0:0",
+     "A4_ADDR=10.42.0.50/24\nA4_BR=vap-br0\nA4_IDX=<ifindex of vap-br0>\nA6_BR=\nA6_IDX=\nA6_ORIG=\nSIG6=\nPREF=7002\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7002: from all to 10.42.0.0/24 lookup main"
+    ],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [
+      "inet 10.42.0.50/24"
+     ],
+     "routes": [
+      "10.42.0.0/24 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "phone address .60",
+   "exit": 0,
+   "output": "daemon=running\nmonitor=1\nmodule_disabled=0\nenabled=1\nipv6=0\nhost_octet=60\nrule_pref=7002\nva_mode=bridged\nbridge=vap-br0\ngateway=10.42.0.1\nbridge_present=1\nsubnet=10.42.0.0/24\nhost_ip=10.42.0.60\naddr4=1\nrule4=1\naddrs6=\nrules6=0\nstate=active\nreason=\nreason_code=\nreason_arg=\nchecked=<time>\nrestart_app=\nversion=<build>\n",
+   "calls": [],
+   "changed": {
+    "/data/adb/nyxbridge/config.sh": [
+     "0o600",
+     "0:0",
+     "enabled=1\nmonitor=1\nipv6=0\nhost_octet=60\nrule_pref=7002\nrestart_app=\nwebui_theme=system\nwebui_monet=1\nwebui_fullscreen=1"
+    ],
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "+<time> Setting changed: host_octet=60\n<time> Removed old 10.42.0.50/24 from vap-br0\n<time> Added 10.42.0.60/24 to vap-br0\n"
+    ],
+    "/dev/nyxbridge/applied": [
+     "0o644",
+     "0:0",
+     "A4_ADDR=10.42.0.60/24\nA4_BR=vap-br0\nA4_IDX=<ifindex of vap-br0>\nA6_BR=\nA6_IDX=\nA6_ORIG=\nSIG6=\nPREF=7002\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7002: from all to 10.42.0.0/24 lookup main"
+    ],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [
+      "inet 10.42.0.60/24"
+     ],
+     "routes": [
+      "10.42.0.0/24 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "refused: the gateway's address",
+   "exit": 2,
+   "output": "That is VirtualAP's gateway address; pick another number\n",
+   "calls": [],
+   "changed": {},
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7002: from all to 10.42.0.0/24 lookup main"
+    ],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [
+      "inet 10.42.0.60/24"
+     ],
+     "routes": [
+      "10.42.0.0/24 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "refused: priority out of range",
+   "exit": 2,
+   "output": "The rule priority must be between 1 and 32765\n",
+   "calls": [],
+   "changed": {},
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7002: from all to 10.42.0.0/24 lookup main"
+    ],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [
+      "inet 10.42.0.60/24"
+     ],
+     "routes": [
+      "10.42.0.0/24 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "refused: unknown setting",
+   "exit": 2,
+   "output": "Unknown setting: nope\n",
+   "calls": [],
+   "changed": {},
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7002: from all to 10.42.0.0/24 lookup main"
+    ],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [
+      "inet 10.42.0.60/24"
+     ],
+     "routes": [
+      "10.42.0.0/24 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "refused: not a package",
+   "exit": 2,
+   "output": "Not a package name: not a package\n",
+   "calls": [],
+   "changed": {},
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7002: from all to 10.42.0.0/24 lookup main"
+    ],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [
+      "inet 10.42.0.60/24"
+     ],
+     "routes": [
+      "10.42.0.0/24 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 1
+  },
+  {
+   "step": "status --json",
+   "exit": 0,
+   "output": "{\"version\":\"<build>\",\"daemon\":true,\"daemon_pid\":\"<pid>\",\"monitor\":true,\"module_disabled\":false,\"enabled\":true,\"ipv6\":false,\"host_octet\":60,\"rule_pref\":7002,\"restart_app\":\"\",\"va_mode\":\"bridged\",\"bridge\":\"vap-br0\",\"gateway\":\"10.42.0.1\",\"bridge_present\":true,\"subnet\":\"10.42.0.0/24\",\"host_ip\":\"10.42.0.60\",\"addr4\":true,\"rule4\":true,\"addrs6\":[],\"rules6\":0,\"v6_targets\":[],\"rules\":[\"7002: from all to 10.42.0.0/24 lookup main\"],\"state\":\"active\",\"reason\":\"\",\"reason_code\":\"\",\"reason_arg\":\"\",\"checked\":\"<time>\"}\n",
+   "calls": [],
+   "changed": {},
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7002: from all to 10.42.0.0/24 lookup main"
+    ],
+    "rules6": [],
+    "vap-br0": {
+     "addrs": [
+      "inet 10.42.0.60/24"
+     ],
+     "routes": [
+      "10.42.0.0/24 proto kernel table main"
+     ],
+     "ipv6": "disable_ipv6=1,accept_ra=1,accept_ra_defrtr=1,autoconf=1"
+    }
+   },
+   "watchers": 1
+  }
+ ]
+}

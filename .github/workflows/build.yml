@@ -1,12 +1,15 @@
 name: Build
 
-# Builds the flashable module zip on every push and PR. Four jobs run side by
+# Builds the flashable module zip on every push and PR. Six jobs run side by
 # side and feed one Package job:
-#   Rust checks     fmt, clippy and tests on the host
-#   arm64 binary    static aarch64 bin/nyxbridge, built with cross (musl)
-#   WebUI           format check, type-check, bundle webroot/js/app.js
-#   Module scripts  ShellCheck, installer checks, Telegram caption tests
-#   Package         zip, KernelSU Modules checks, artifact, Telegram, release
+#   Rust checks       fmt, clippy and tests on the host
+#   arm64 binary      static aarch64 bin/nyxbridge, built with cross (musl)
+#   Boot and watcher  service.sh and the watcher in 19 device scenarios (tests/boot)
+#   WebUI             format check, type-check, bundle webroot/js/app.js
+#   WebUI tests       every page and setting in Chromium against the real
+#                     program, sh and mksh (tests/webui)
+#   Module scripts    ShellCheck, installer checks, Telegram caption tests
+#   Package           zip, KernelSU Modules checks, artifact, Telegram, release
 #
 # A manual run (workflow_dispatch) also sends the zip to Telegram as a CI
 # build. A v* tag publishes an immutable GitHub release through the KernelSU
@@ -82,6 +85,27 @@ jobs:
                   path: target/aarch64-unknown-linux-musl/release/nyxbridge
                   if-no-files-found: error
 
+    boot:
+        name: Boot and watcher
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: dtolnay/rust-toolchain@stable
+            - uses: Swatinem/rust-cache@v2
+            - name: Install a static busybox
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y busybox-static
+            - name: Build a static host binary
+              env:
+                  RUSTFLAGS: -C target-feature=+crt-static
+              run: cargo build --release --locked --target x86_64-unknown-linux-gnu
+            - name: Run the boot scenarios
+              # Each scenario runs service.sh and the watcher in a chroot with a
+              # network of its own and compares every call, written file and
+              # network change with tests/boot/expected.
+              run: sudo python3 tests/boot/run.py --binary target/x86_64-unknown-linux-gnu/release/nyxbridge
+
     webui:
         name: WebUI
         runs-on: ubuntu-latest
@@ -106,6 +130,36 @@ jobs:
                   path: module/webroot/js/app.js
                   if-no-files-found: error
 
+    webui-tests:
+        name: WebUI tests
+        runs-on: ubuntu-latest
+        env:
+            # Shared by the install and by the tests, which run as root.
+            PLAYWRIGHT_BROWSERS_PATH: /tmp/ms-playwright
+        steps:
+            - uses: actions/checkout@v7
+            - uses: dtolnay/rust-toolchain@stable
+            - uses: Swatinem/rust-cache@v2
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - name: Install mksh and Chromium
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y mksh
+                  npx playwright install --with-deps chromium
+            - name: Build
+              run: |
+                  npm run build
+                  cargo build --release --locked
+            # Root for the network namespaces the tests build their hotspot in.
+            - name: WebUI tests (sh)
+              run: sudo --preserve-env=PLAYWRIGHT_BROWSERS_PATH "$(command -v node)" tests/webui/run.cjs
+            - name: WebUI tests (mksh)
+              run: sudo --preserve-env=PLAYWRIGHT_BROWSERS_PATH NYX_SH=mksh "$(command -v node)" tests/webui/run.cjs
+
     scripts:
         name: Module scripts
         runs-on: ubuntu-latest
@@ -127,7 +181,7 @@ jobs:
 
     package:
         name: Package
-        needs: [rust, binary, webui, scripts]
+        needs: [rust, binary, boot, webui, webui-tests, scripts]
         runs-on: ubuntu-latest
         permissions:
             contents: write # releases and the update.json commit

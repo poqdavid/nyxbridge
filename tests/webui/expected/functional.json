@@ -1,0 +1,204 @@
+{
+ "html": {
+  "theme": "light",
+  "fs": "on",
+  "monet": "on",
+  "lang": "en"
+ },
+ "nav": "Main\nSettings\nLogs\nAbout",
+ "main_fresh": "Not checked yet\nLive\nVirtualAP\nNot running\nPhone address\nNot set\nRouting rule\nNot installed\nIPv6\nOff\nLast check\n—\nMonitoring\nOn, but the watcher isn't running. Tap Start watcher.\nStart watcher\nCheck now\nDevices on the hotspot\nvap‑br0 is not up - start the hotspot in VirtualAP.\nWhat has sent anything over the hotspot in the last few minutes. Addresses show once the phone has talked to a device. Tap one to check the route to it.\nRoute check\nShows which way the phone sends traffic to an address - over the hotspot, or somewhere else such as a VPN. Name an app to check as that app (VPNs often pick apps).\nCheck",
+ "markup": [
+  "<section class=\"page active\" id=\"page-main\"><section class=\"card bridge-card\" aria-live=\"polite\"><div class=\"bridge-card__head\"><span class=\"state-dot is-live\" data-role=\"dot\"></span><div class=\"bridge-card__text\"><div class=\"bridge-card__title\" data-role=\"title\">Not checked yet</div><div class=\"bridge-card__reason\" data-role=\"reason\"></div></div><span class=\"live-chip\" data-role=\"live\" title=\"Updates by itself while this page is open\"><span class=\"live-chip__dot\"></span>Live </span></div><div class=\"notice notice--error\" data-role=\"no-program\" hidden=\"\">NyxBridge's program didn't answer. Reboot once after installing or updating the module; if it stays like this, reinstall it.</div><div class=\"kv-list\"><div class=\"kv-row\"><span class=\"kv-row__label\">VirtualAP</span><span class=\"kv-row__value\" data-row=\"va\">Not running</span></div><div class=\"kv-row\"><span class=\"kv-row__label\">Phone address</span><span class=\"kv-row__value is-missing\" data-row=\"addr\">Not set</span></div><div class=\"kv-row\"><span class=\"kv-row__label\">Routing rule</span><span class=\"kv-row__value is-missing\" data-row=\"rule\">Not installed</span></div><div class=\"kv-row\"><span class=\"kv-row__label\">IPv6</span><span class=\"kv-row__value is-missing\" data-row=\"v6\">Off</span></div><div class=\"kv-row\"><span class=\"kv-row__label\">Last check</span><span class=\"kv-row__value\" data-row=\"checked\">—</span></div><div class=\"kv-row kv-row--switch\"><div class=\"kv-row__text\"><span class=\"kv-row__label\">Monitoring</span><span class=\"kv-row__desc is-warn\" data-role=\"monitor-desc\">On, but the watcher isn't running. Tap Start watcher.</span></div><label class=\"m3-switch\"><input type=\"checkbox\" data-role=\"monitor\" aria-label=\"Monitoring\"><span class=\"m3-switch__track\"></span><span class=\"m3-switch__thumb\"></span></label></div></div><div class=\"bridge-card__actions\"><button class=\"btn btn--tonal\" data-role=\"start\">Start watcher</button><button class=\"btn btn--filled\" data-role=\"check\">Check now</button></div></section><h2 class=\"section-title section-title--row\"><span>Devices on the hotspot</span><span class=\"count-badge\" data-role=\"device-count\" hidden=\"\">0</span></h2><div class=\"card device-card\"><div class=\"device-list\" data-role=\"devices\"><div class=\"empty-hint\">vap‑br0 is not up - start the hotspot in VirtualAP.</div></div><p class=\"card-note\">What has sent anything over the hotspot in the last few minutes. Addresses show once the phone has talked to a device. Tap one to check the route to it.</p></div><h2 class=\"section-title\">Route check</h2><div class=\"card\" data-role=\"route-card\"><p class=\"card-note card-note--top\">Shows which way the phone sends traffic to an address - over the hotspot, or somewhere else such as a VPN. Name an app to check as that app (VPNs often pick apps).</p><div class=\"route-form\"><input class=\"select-field route-form__dest\" data-role=\"dest\" type=\"text\" inputmode=\"url\" autocomplete=\"off\" autocapitalize=\"off\" spellcheck=\"false\" placeholder=\"192.168.42.150\" aria-label=\"Address\"><input class=\"select-field route-form__app\" data-role=\"app\" type=\"text\" autocomplete=\"off\" autocapitalize=\"off\" spellcheck=\"false\" placeholder=\"App package (optional)\" aria-label=\"App\"><button class=\"btn btn--filled\" data-role=\"route-go\" disabled=\"\">Check</button></div><div class=\"route-result\" data-role=\"route-result\" hidden=\"\"></div></div></section>",
+  "<section class=\"page\" id=\"page-settings\"><h2 class=\"section-title\">Language</h2><div class=\"card\"><div class=\"setting-row setting-row--stacked\"><div class=\"setting-row__text\"><div class=\"setting-row__title\">Interface language</div><div class=\"setting-row__desc\">English is the source language. Other languages are community translations and may be incomplete; missing text falls back to English.</div></div><select class=\"select-field select-field--block\" data-role=\"language\"><option value=\"en\" selected=\"\">English</option></select></div></div><h2 class=\"section-title\">Bridge</h2><div class=\"card\"><div class=\"setting-row\"><div class=\"setting-row__text\"><div class=\"setting-row__title\">Phone address on the bridge</div><div class=\"setting-row__desc\">Lets apps on the phone reach hotspot devices while VirtualAP runs in managed mode.</div></div><label class=\"m3-switch\"><input type=\"checkbox\" data-role=\"enabled\" aria-label=\"Phone address on the bridge\"><span class=\"m3-switch__track\"></span><span class=\"m3-switch__thumb\"></span></label></div><div class=\"setting-row\"><div class=\"setting-row__text\"><div class=\"setting-row__title\">IPv6</div><div class=\"setting-row__desc\">Also take an address from OpenWrt's announcements. Never uses OpenWrt as the phone's IPv6 gateway. Off by default.</div><button class=\"btn btn--text btn--inline\" data-role=\"v6-details\" hidden=\"\">IPv6 details</button></div><label class=\"m3-switch\"><input type=\"checkbox\" data-role=\"ipv6\" aria-label=\"IPv6\"><span class=\"m3-switch__track\"></span><span class=\"m3-switch__thumb\"></span></label></div><div class=\"setting-row setting-row--stacked\"><div class=\"setting-row__text\"><div class=\"setting-row__title\">Phone address</div></div><div class=\"ip-edit\"><span class=\"ip-edit__prefix\" data-role=\"prefix\">&lt;gateway /24&gt;.</span><input class=\"select-field ip-edit__input\" data-role=\"host\" type=\"text\" inputmode=\"numeric\" maxlength=\"3\" autocomplete=\"off\" aria-label=\"Last number of the phone address\"><button class=\"btn btn--tonal\" data-role=\"save-host\" disabled=\"\">Save</button></div><div class=\"setting-row__desc\" data-role=\"host-hint\">OpenWrt hands out .100–.249 by DHCP; keep the phone outside that range.</div></div></div><h2 class=\"section-title\">Routing</h2><div class=\"card\"><div class=\"setting-row setting-row--stacked\"><div class=\"setting-row__text\"><div class=\"setting-row__title\">Rule priority</div><div class=\"setting-row__desc\">Where the routing rule sits among Android's rules; lower numbers are looked at first. Changing it moves the rules over. Default 7001.</div></div><div class=\"ip-edit\"><input class=\"select-field ip-edit__input ip-edit__input--wide\" data-role=\"pref\" type=\"text\" inputmode=\"numeric\" maxlength=\"5\" autocomplete=\"off\" aria-label=\"Rule priority\"><button class=\"btn btn--tonal\" data-role=\"save-pref\" disabled=\"\">Save</button><button class=\"btn btn--text\" data-role=\"reset-pref\" hidden=\"\">Default</button></div><div class=\"setting-row__desc\" data-role=\"pref-hint\">Keep it below 10000, where Android's own rules start.</div></div></div><h2 class=\"section-title\">App restart</h2><div class=\"card\"><div class=\"setting-row setting-row--stacked\"><div class=\"setting-row__text\"><div class=\"setting-row__title\">Restart an app when the bridge comes up</div><div class=\"setting-row__desc\">Apps like LocalSend look for networks only when they start. When the phone gets its hotspot address, NyxBridge closes this app and opens it again - only if it was running. Leave empty for none.</div></div><div class=\"ip-edit\"><input class=\"select-field ip-edit__input ip-edit__input--grow\" data-role=\"app\" type=\"text\" autocomplete=\"off\" autocapitalize=\"off\" spellcheck=\"false\" placeholder=\"org.localsend.localsend_app\" aria-label=\"Package name\"><button class=\"btn btn--tonal\" data-role=\"save-app\" disabled=\"\">Save</button></div><div class=\"setting-row__desc\" data-role=\"app-hint\"></div><div class=\"setting-row__actions\"><button class=\"btn btn--text\" data-role=\"restart-now\" disabled=\"\">Restart it now</button></div></div></div><p class=\"setting-row__desc page-footnote\">All settings are saved in <code>/data/adb/nyxbridge/config.sh</code>.</p></section>",
+  "<section class=\"page\" id=\"page-logs\"><h2 class=\"section-title\">Activity</h2><div class=\"card\"><pre class=\"log-view is-empty\" data-role=\"log\">No activity yet.</pre></div><p class=\"setting-row__desc page-footnote\">Newest at the bottom. Updates by itself while Main shows Live; the refresh button in the top bar re-reads it. <code>/data/adb/nyxbridge/nyxbridge.log</code></p><h2 class=\"section-title\">Diagnostics</h2><div class=\"card\"><div class=\"setting-row setting-row--stacked\"><div class=\"setting-row__text\"><div class=\"setting-row__desc\">Everything useful for a bug report in one block of text: the status, VirtualAP's state, the settings, the routing rules, the bridge's addresses and the end of the log. It names your hotspot's addresses; nothing is sent anywhere.</div></div><div class=\"setting-row__actions\"><button class=\"btn btn--text\" data-role=\"diag-show\">Show</button><button class=\"btn btn--tonal btn--icon\" data-role=\"diag-copy\"><svg viewBox=\"0 0 24 24\"><path d=\"M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z\"></path></svg><span>Copy diagnostics</span></button></div></div></div></section>",
+  "<section class=\"page\" id=\"page-about\"><div class=\"card about-head\"><div class=\"about-head__name\" data-role=\"name\">NyxBridge</div><div class=\"about-head__version\" data-role=\"version\"><version> · by poqdavid</div></div><h2 class=\"section-title\">What it does</h2><div class=\"card prose\"><p>In managed mode VirtualAP hands the hotspot to an OpenWrt container and leaves its bridge, <code>vap-br0</code>, without an address, so the phone itself is not on the hotspot network. NyxBridge gives the phone an address there and adds the routing rule Android needs, so apps like LocalSend can reach hotspot devices.</p><p>It only acts while VirtualAP runs in managed mode, and removes everything it added when the hotspot stops.</p></div><h2 class=\"section-title\">Appearance</h2><div class=\"card\"><div class=\"setting-row\"><div class=\"setting-row__text\"><div class=\"setting-row__title\">Theme</div><div class=\"setting-row__desc\" data-role=\"theme-hint\">Following the device setting — currently light.</div></div><select class=\"select-field\" data-role=\"theme\"><option value=\"system\">System</option><option value=\"light\">Light</option><option value=\"dark\">Dark</option></select></div><div class=\"setting-row\"><div class=\"setting-row__text\"><div class=\"setting-row__title\">Material You</div><div class=\"setting-row__desc\" data-role=\"monet-hint\">Use the colours from your wallpaper</div></div><label class=\"m3-switch\"><input type=\"checkbox\" data-role=\"monet\"><span class=\"m3-switch__track\"></span><span class=\"m3-switch__thumb\"></span></label></div><div class=\"setting-row\"><div class=\"setting-row__text\"><div class=\"setting-row__title\">Fullscreen</div><div class=\"setting-row__desc\" data-role=\"fullscreen-hint\">Hide the status and navigation bars</div></div><label class=\"m3-switch\"><input type=\"checkbox\" data-role=\"fullscreen\"><span class=\"m3-switch__track\"></span><span class=\"m3-switch__thumb\"></span></label></div></div><h2 class=\"section-title\">Credits</h2><div class=\"card prose\"><p><strong>VirtualAP</strong> by <strong>ravindu644</strong> creates the hotspot and the managed-mode bridge NyxBridge attaches to.</p><p><strong>Droidspaces</strong> by <strong>ravindu644</strong> runs the OpenWrt container that owns the hotspot network.</p><p>The idea of a low-priority routing rule for the hotspot subnet comes from studying <strong>droidspaces-lan-ip</strong> by <strong>yashoswalyo</strong> and VirtualAP’s routed mode. NyxBridge’s code is its own.</p><p>The WebUI shares its framework with NyxSUSFS and NyxProps. Issues and translations welcome.</p><p class=\"muted\">Config &amp; logs: <code>/data/adb/nyxbridge</code></p></div><h2 class=\"section-title\">License</h2><div class=\"card prose\"><p>Copyright © 2026 poqdavid</p><p>NyxBridge is free software under the GNU Affero General Public License v3.0 (AGPL-3.0-only). You may redistribute and modify it under that license. It comes with ABSOLUTELY NO WARRANTY.</p><p class=\"muted\">License text and notices: <code>/data/adb/modules/nyxbridge/LICENSE</code>, <code>NOTICE.md</code><br>Source code: <code>github.com/poqdavid/nyxbridge</code></p></div></section>",
+  "<nav class=\"nav-bar\" id=\"nav-bar\"><button class=\"nav-item\" data-page=\"main\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\"><path d=\"M12 3 3 10v11h6v-6h6v6h6V10z\"></path></svg><span class=\"pill\">Main</span></button><button class=\"nav-item\" data-page=\"settings\"><svg viewBox=\"0 0 24 24\"><path d=\"M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zm7.4-3.5c0 .4 0 .8-.1 1.2l2 1.6-2 3.4-2.4-1a7.7 7.7 0 0 1-2 1.2l-.4 2.6H9.5l-.4-2.6a7.7 7.7 0 0 1-2-1.2l-2.4 1-2-3.4 2-1.6a7 7 0 0 1 0-2.4l-2-1.6 2-3.4 2.4 1a7.7 7.7 0 0 1 2-1.2L9.5 2h5l.4 2.6a7.7 7.7 0 0 1 2 1.2l2.4-1 2 3.4-2 1.6c.1.4.1.8.1 1.2z\"></path></svg><span class=\"pill\">Settings</span></button><button class=\"nav-item\" data-page=\"logs\"><svg viewBox=\"0 0 24 24\"><path fill-rule=\"evenodd\" d=\"M6 2h9l5 5v15H6zm2.5 8h9v1.6h-9zm0 3.5h9v1.6h-9zm0 3.5h6v1.6h-6z\"></path></svg><span class=\"pill\">Logs</span></button><button class=\"nav-item\" data-page=\"about\"><svg viewBox=\"0 0 24 24\"><path d=\"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2zm0-8h-2V7h2z\"></path></svg><span class=\"pill\">About</span></button></nav>"
+ ],
+ "main_checked": "Idle\nVirtualAP is not running\nLive\nVirtualAP\nNot running\nPhone address\nNot set\nRouting rule\nNot installed\nIPv6\nOff\nLast check\n<time>\nMonitoring\nOn, but the watcher isn't running. Tap Start watcher.\nStart watcher\nCheck now\nDevices on the hotspot\nvap‑br0 is not up - start the hotspot in VirtualAP.\nWhat has sent anything over the hotspot in the last few minutes. Addresses show once the phone has talked to a device. Tap one to check the route to it.\nRoute check\nShows which way the phone sends traffic to an address - over the hotspot, or somewhere else such as a VPN. Name an app to check as that app (VPNs often pick apps).\nCheck",
+ "live_va_row": "Managed mode · gateway 192.168.42.1",
+ "main_va_up": "Idle\nVirtualAP is not running\nLive\nVirtualAP\nManaged mode · gateway 192.168.42.1\nPhone address\nNot set\nRouting rule\nNot installed\nIPv6\nOff\nLast check\n<time>\nMonitoring\nOn, but the watcher isn't running. Tap Start watcher.\nStart watcher\nCheck now\nDevices on the hotspot\nNo devices seen yet.\nWhat has sent anything over the hotspot in the last few minutes. Addresses show once the phone has talked to a device. Tap one to check the route to it.\nRoute check\nShows which way the phone sends traffic to an address - over the hotspot, or somewhere else such as a VPN. Name an app to check as that app (VPNs often pick apps).\nCheck",
+ "main_active": "Active\nPhone apps can reach devices on vap‑br0.\nLive\nVirtualAP\nManaged mode · gateway 192.168.42.1\nPhone address\n192.168.42.2 on vap‑br0\nRouting rule\n7001: to 192.168.42.0/24 → main\nIPv6\nOff\nLast check\n<time>\nMonitoring\nWatching VirtualAP and applying changes automatically.\nCheck now\nDevices on the hotspot\nNo devices seen yet.\nWhat has sent anything over the hotspot in the last few minutes. Addresses show once the phone has talked to a device. Tap one to check the route to it.\nRoute check\nShows which way the phone sends traffic to an address - over the hotspot, or somewhere else such as a VPN. Name an app to check as that app (VPNs often pick apps).\nCheck",
+ "net_active": {
+  "rules": [
+   "7001: from all to 192.168.42.0/24 lookup main"
+  ],
+  "addrs": "inet 192.168.42.2/24"
+ },
+ "devices": "192.168.42.1\nOpenWrt gateway\n02:00:00:00:00:01\n192.168.42.150\n02:00:00:00:00:96",
+ "route_device": "From the phone → 192.168.42.150\nGoes over the hotspot (vap‑br0)\ntable main · from 192.168.42.2",
+ "route_vpn": "From the phone → 1.1.1.1\nDoes not use the hotspot: goes out through tun0\ntable 99 · from 10.8.0.2\nThis address is not on the hotspot network (192.168.42.0/24).",
+ "route_as_app": "As org.test.app (uid 10123) → 192.168.42.150\nGoes over the hotspot (vap‑br0)\ntable main · from 192.168.42.2",
+ "route_unknown_app": "App not found: org.missing.app",
+ "route_invalid": {
+  "disabled": true,
+  "invalid": true
+ },
+ "page_settings": "Language\nInterface language\nEnglish is the source language. Other languages are community translations and may be incomplete; missing text falls back to English.\nEnglish\nBridge\nPhone address on the bridge\nLets apps on the phone reach hotspot devices while VirtualAP runs in managed mode.\nIPv6\nAlso take an address from OpenWrt's announcements. Never uses OpenWrt as the phone's IPv6 gateway. Off by default.\nPhone address\n192.168.42.\nSave\nOpenWrt hands out .100–.249 by DHCP; keep the phone outside that range.\nRouting\nRule priority\nWhere the routing rule sits among Android's rules; lower numbers are looked at first. Changing it moves the rules over. Default 7001.\nSave\nKeep it below 10000, where Android's own rules start.\nApp restart\nRestart an app when the bridge comes up\nApps like LocalSend look for networks only when they start. When the phone gets its hotspot address, NyxBridge closes this app and opens it again - only if it was running. Leave empty for none.\nSave\nRestart it now\nAll settings are saved in /data/adb/nyxbridge/config.sh.",
+ "host_typed": {
+  "1": {
+   "value": "1",
+   "invalid": true,
+   "save": "disabled",
+   "hint": "That is VirtualAP's gateway address."
+  },
+  "7": {
+   "value": "7",
+   "invalid": false,
+   "save": "enabled",
+   "hint": "OpenWrt hands out .100–.249 by DHCP; keep the phone outside that range."
+  },
+  "120": {
+   "value": "120",
+   "invalid": false,
+   "save": "enabled",
+   "hint": "Inside OpenWrt's DHCP range (.100–.249): a hotspot device could get the same address."
+  },
+  "255": {
+   "value": "255",
+   "invalid": true,
+   "save": "disabled",
+   "hint": "OpenWrt hands out .100–.249 by DHCP; keep the phone outside that range."
+  }
+ },
+ "host_saved": {
+  "toast": "Phone address set to .7",
+  "addrs": "inet 192.168.42.7/24",
+  "cfg": "7"
+ },
+ "pref_typed": {
+  "7005": {
+   "value": "7005",
+   "invalid": false,
+   "save": "enabled",
+   "hint": "Keep it below 10000, where Android's own rules start."
+  },
+  "12000": {
+   "value": "12000",
+   "invalid": false,
+   "save": "enabled",
+   "hint": "10000 or above comes after Android's own rules (VPN, per-network), which can then send hotspot traffic elsewhere."
+  },
+  "40000": {
+   "value": "40000",
+   "invalid": true,
+   "save": "disabled",
+   "hint": "Between 1 and 32765."
+  }
+ },
+ "pref_saved": {
+  "toast": "Rule priority set to 7005",
+  "rules": [
+   "7005: from all to 192.168.42.0/24 lookup main"
+  ],
+  "cfg": "7005",
+  "reset_shown": true
+ },
+ "pref_reset": {
+  "toast": "Rule priority set to 7001",
+  "rules": [
+   "7001: from all to 192.168.42.0/24 lookup main"
+  ],
+  "cfg": "7001",
+  "reset_shown": false
+ },
+ "app_invalid": {
+  "value": "not a package",
+  "invalid": true,
+  "save": "disabled",
+  "hint": "Not a package name (like org.example.app)."
+ },
+ "app_saved": {
+  "toast": "org.test.app will be restarted when the bridge comes up",
+  "cfg": "org.test.app",
+  "restart_now": "enabled"
+ },
+ "app_restart_now": {
+  "toast": "Restarted org.test.app",
+  "calls": "am force-stop org.test.app\nmonkey -p org.test.app -c android.intent.category.LAUNCHER 1"
+ },
+ "ipv6_on": {
+  "toast": "IPv6 on",
+  "cfg": "1",
+  "details_shown": true
+ },
+ "ipv6_sheet_waiting": "IPv6 details\nRules installed (1)\n7001: from all oif vap-br0 lookup main\nRules wanted (from the routes on the bridge) (1)\n7001: from all oif vap-br0 lookup main",
+ "main_v6_row": "fd00:42::2:aff:fe00:10/64 · 3 rules",
+ "ipv6_sheet": "IPv6 details\nAddresses on the bridge (1)\nfd00:42::2:aff:fe00:10/64\nRules installed (3)\n7001: from all oif vap-br0 lookup main\n7001: from all to fd00:42::/64 lookup main\n7001: from all to fd00:43::/48 lookup main\nRules wanted (from the routes on the bridge) (3)\n7001: from all oif vap-br0 lookup main\n7001: from all to fd00:42::/64 lookup main\n7001: from all to fd00:43::/48 lookup main",
+ "ipv6_off": {
+  "toast": "IPv6 off",
+  "cfg": "0",
+  "details_shown": false,
+  "v6_row": "Off"
+ },
+ "enabled_off": {
+  "toast": "Turned off; address and rule removed",
+  "cfg": "0",
+  "rules": [],
+  "addrs": "",
+  "ipv6_disabled": true,
+  "main": "Idle: Turned off in settings"
+ },
+ "enabled_on": {
+  "toast": "Turned on",
+  "cfg": "1",
+  "rules": [
+   "7001: from all to 192.168.42.0/24 lookup main"
+  ],
+  "addrs": "inet 192.168.42.7/24"
+ },
+ "page_settings_after": "Language\nInterface language\nEnglish is the source language. Other languages are community translations and may be incomplete; missing text falls back to English.\nEnglish\nBridge\nPhone address on the bridge\nLets apps on the phone reach hotspot devices while VirtualAP runs in managed mode.\nIPv6\nAlso take an address from OpenWrt's announcements. Never uses OpenWrt as the phone's IPv6 gateway. Off by default.\nPhone address\n192.168.42.\nSave\nOpenWrt hands out .100–.249 by DHCP; keep the phone outside that range.\nRouting\nRule priority\nWhere the routing rule sits among Android's rules; lower numbers are looked at first. Changing it moves the rules over. Default 7001.\nSave\nKeep it below 10000, where Android's own rules start.\nApp restart\nRestart an app when the bridge comes up\nApps like LocalSend look for networks only when they start. When the phone gets its hotspot address, NyxBridge closes this app and opens it again - only if it was running. Leave empty for none.\nSave\nRestart it now\nAll settings are saved in /data/adb/nyxbridge/config.sh.",
+ "monitor_off": {
+  "toast": "Monitoring off",
+  "cfg": "0",
+  "watcher": false,
+  "main": "Active\nPhone apps can reach devices on vap‑br0.\nLive\nVirtualAP\nManaged mode · gateway 192.168.42.1\nPhone address\n192.168.42.7 on vap‑br0\nRouting rule\n7001: to 192.168.42.0/24 → main\nIPv6\nOff\nLast check\n<time>\nMonitoring\nOff. Nothing runs in the background; tap Check now after starting or stopping the hotspot.\nCheck now\nDevices on the hotspot\n2\nNo address seen yet\n02:00:00:00:00:01\nNo address seen yet\n02:00:00:00:00:96\nWhat has sent anything over the hotspot in the last few minutes. Addresses show once the phone has talked to a device. Tap one to check the route to it.\nRoute check\nShows which way the phone sends traffic to an address - over the hotspot, or somewhere else such as a VPN. Name an app to check as that app (VPNs often pick apps).\nCheck\nApp not found: org.missing.app"
+ },
+ "monitor_on": {
+  "toast": "Monitoring on",
+  "cfg": "1",
+  "watcher": true
+ },
+ "page_logs": "Activity\n<time> inactive: VirtualAP is not running\n<time> Watcher started (pid <pid>)\n<time> Added 192.168.42.2/24 to vap-br0\n<time> Added rule 7001: to 192.168.42.0/24 lookup main\n<time> Active on vap-br0\n<time> Setting changed: host_octet=7\n<time> Removed old 192.168.42.2/24 from vap-br0\n<time> Added 192.168.42.7/24 to vap-br0\n<time> Setting changed: rule_pref=7005\n<time> Rule priority changed from 7001 to 7005; removed the rules at 7001\n<time> Added rule 7005: to 192.168.42.0/24 lookup main\n<time> Setting changed: rule_pref=7001\n<time> Rule priority changed from 7005 to 7001; removed the rules at 7005\n<time> Added rule 7001: to 192.168.42.0/24 lookup main\n<time> Restarted org.test.app from the WebUI\n<time> Setting changed: ipv6=1\n<time> IPv6 on: vap-br0 now accepts OpenWrt's router advertisements (no default route)\n<time> IPv6 rules: oif vap-br0 lookup main\n<time> IPv6 rules: oif vap-br0 lookup main, to fd00:42::/64 lookup main, to fd00:43::/48 lookup main\n<time> Setting changed: ipv6=0\n<time> Removed IPv6 rules 7001\n<time> IPv6 off: settings on vap-br0 restored\n<time> Setting changed: enabled=0\n<time> Removed IPv4 rule 7001\n<time> Removed 192.168.42.7/24 from vap-br0\n<time> inactive: Turned off in settings\n<time> Setting changed: enabled=1\n<time> Added 192.168.42.7/24 to vap-br0\n<time> Added rule 7001: to 192.168.42.0/24 lookup main\n<time> Active on vap-br0\n<time> Monitoring turned off\n<time> Watcher stopped\n<time> Monitoring turned on\n<time> Watcher started (pid <pid>)\nNewest at the bottom. Updates by itself while Main shows Live; the refresh button in the top bar re-reads it. /data/adb/nyxbridge/nyxbridge.log\nDiagnostics\nEverything useful for a bug report in one block of text: the status, VirtualAP's state, the settings, the routing rules, the bridge's addresses and the end of the log. It names your hotspot's addresses; nothing is sent anywhere.\nShow\nCopy diagnostics",
+ "diagnostics": "Diagnostics\nNyxBridge <build>\nTime: <time>\nro.product.model: SM-A155F\nro.build.version.release: 15\nro.build.version.sdk: 35\n== Status\ndaemon=running\nmonitor=1\nmodule_disabled=0\nenabled=1\nipv6=0\nhost_octet=7\nrule_pref=7001\nva_mode=bridged\nbridge=vap-br0\ngateway=192.168.42.1\nbridge_present=1\nsubnet=192.168.42.0/24\nhost_ip=192.168.42.7\naddr4=1\nrule4=1\naddrs6=\nrules6=0\nstate=active\nreason=\nreason_code=\nreason_arg=\nchecked=<time>\nrestart_app=org.test.app\nversion=<build>\n== VirtualAP run.state\nmode=bridged\ncontainer=openwrt\nbridge=vap-br0\ngateway=192.168.42.1\n== Config\nenabled=1\nmonitor=1\nipv6=0\nhost_octet=7\nrule_pref=7001\nrestart_app=org.test.app\nwebui_theme=system\nwebui_monet=1\nwebui_fullscreen=1\n== IPv4 rules\n0: from all lookup local\n7001: from all to 192.168.42.0/24 lookup main\n13000: from all lookup 99\n32766: from all lookup main\n32767: from all lookup default\n== IPv6 rules\n0: from all lookup local\n32766: from all lookup main\n== vap-br0 (ifindex <n>)\naddr 192.168.42.7/24 scope 0 flags 0x80\nipv6 disable_ipv6=1 accept_ra=1 accept_ra_defrtr=1 autoconf=1 forwarding=0\n== Applied\nA4_ADDR=192.168.42.7/24\nA4_BR=vap-br0\nA4_IDX=<ifindex>\nA6_BR=\nA6_IDX=\nA6_ORIG=\nSIG6=\nPREF=7001\n== Watcher pid <pid>\n<cgroups>\n== Log (last 50 lines)\n<time> inactive: VirtualAP is not running\n<time> Watcher started (pid <pid>)\n<time> Added 192.168.42.2/24 to vap-br0\n<time> Added rule 7001: to 192.168.42.0/24 lookup main\n<time> Active on vap-br0\n<time> Setting changed: host_octet=7\n<time> Removed old 192.168.42.2/24 from vap-br0\n<time> Added 192.168.42.7/24 to vap-br0\n<time> Setting changed: rule_pref=7005\n<time> Rule priority changed from 7001 to 7005; removed the rules at 7001\n<time> Added rule 7005: to 192.168.42.0/24 lookup main\n<time> Setting changed: rule_pref=7001\n<time> Rule priority changed from 7005 to 7001; removed the rules at 7005\n<time> Added rule 7001: to 192.168.42.0/24 lookup main\n<time> Restarted org.test.app from the WebUI\n<time> Setting changed: ipv6=1\n<time> IPv6 on: vap-br0 now accepts OpenWrt's router advertisements (no default route)\n<time> IPv6 rules: oif vap-br0 lookup main\n<time> IPv6 rules: oif vap-br0 lookup main, to fd00:42::/64 lookup main, to fd00:43::/48 lookup main\n<time> Setting changed: ipv6=0\n<time> Removed IPv6 rules 7001\n<time> IPv6 off: settings on vap-br0 restored\n<time> Setting changed: enabled=0\n<time> Removed IPv4 rule 7001\n<time> Removed 192.168.42.7/24 from vap-br0\n<time> inactive: Turned off in settings\n<time> Setting changed: enabled=1\n<time> Added 192.168.42.7/24 to vap-br0\n<time> Added rule 7001: to 192.168.42.0/24 lookup main\n<time> Active on vap-br0\n<time> Monitoring turned off\n<time> Watcher stopped\n<time> Monitoring turned on\n<time> Watcher started (pid <pid>)",
+ "page_about": "NyxBridge\n<version> · by poqdavid\nWhat it does\nIn managed mode VirtualAP hands the hotspot to an OpenWrt container and leaves its bridge, vap-br0, without an address, so the phone itself is not on the hotspot network. NyxBridge gives the phone an address there and adds the routing rule Android needs, so apps like LocalSend can reach hotspot devices.\nIt only acts while VirtualAP runs in managed mode, and removes everything it added when the hotspot stops.\nAppearance\nTheme\nFollowing the device setting — currently light.\nSystem\nLight\nDark\nMaterial You\nUse the colours from your wallpaper\nFullscreen\nHide the status and navigation bars\nCredits\nVirtualAP by ravindu644 creates the hotspot and the managed-mode bridge NyxBridge attaches to.\nDroidspaces by ravindu644 runs the OpenWrt container that owns the hotspot network.\nThe idea of a low-priority routing rule for the hotspot subnet comes from studying droidspaces-lan-ip by yashoswalyo and VirtualAP’s routed mode. NyxBridge’s code is its own.\nThe WebUI shares its framework with NyxSUSFS and NyxProps. Issues and translations welcome.\nConfig & logs: /data/adb/nyxbridge\nLicense\nCopyright © 2026 poqdavid\nNyxBridge is free software under the GNU Affero General Public License v3.0 (AGPL-3.0-only). You may redistribute and modify it under that license. It comes with ABSOLUTELY NO WARRANTY.\nLicense text and notices: /data/adb/modules/nyxbridge/LICENSE, NOTICE.md\nSource code: github.com/poqdavid/nyxbridge",
+ "theme_dark": {
+  "cfg": "dark",
+  "theme": "dark",
+  "hint": ""
+ },
+ "theme_system": {
+  "cfg": "system",
+  "theme": "light",
+  "hint": "Following the device setting — currently light."
+ },
+ "monet": {
+  "cfg": "0",
+  "checked": false,
+  "hint": "Use the colours from your wallpaper"
+ },
+ "fullscreen": {
+  "cfg": "0",
+  "fs": "off"
+ },
+ "refreshed_main": "Active\nPhone apps can reach devices on vap‑br0.\nLive\nVirtualAP\nManaged mode · gateway 192.168.42.1\nPhone address\n192.168.42.7 on vap‑br0\nRouting rule\n7001: to 192.168.42.0/24 → main\nIPv6\nOff\nLast check\n<time>\nMonitoring\nWatching VirtualAP and applying changes automatically.\nCheck now\nDevices on the hotspot\n2\nNo address seen yet\n02:00:00:00:00:01\nNo address seen yet\n02:00:00:00:00:96\nWhat has sent anything over the hotspot in the last few minutes. Addresses show once the phone has talked to a device. Tap one to check the route to it.\nRoute check\nShows which way the phone sends traffic to an address - over the hotspot, or somewhere else such as a VPN. Name an app to check as that app (VPNs often pick apps).\nCheck\nApp not found: org.missing.app",
+ "refreshed_settings": "Language\nInterface language\nEnglish is the source language. Other languages are community translations and may be incomplete; missing text falls back to English.\nEnglish\nBridge\nPhone address on the bridge\nLets apps on the phone reach hotspot devices while VirtualAP runs in managed mode.\nIPv6\nAlso take an address from OpenWrt's announcements. Never uses OpenWrt as the phone's IPv6 gateway. Off by default.\nPhone address\n192.168.42.\nSave\nOpenWrt hands out .100–.249 by DHCP; keep the phone outside that range.\nRouting\nRule priority\nWhere the routing rule sits among Android's rules; lower numbers are looked at first. Changing it moves the rules over. Default 7001.\nSave\nKeep it below 10000, where Android's own rules start.\nApp restart\nRestart an app when the bridge comes up\nApps like LocalSend look for networks only when they start. When the phone gets its hotspot address, NyxBridge closes this app and opens it again - only if it was running. Leave empty for none.\nSave\nRestart it now\nAll settings are saved in /data/adb/nyxbridge/config.sh.",
+ "refreshed_logs": "Activity\n<time> inactive: VirtualAP is not running\n<time> Watcher started (pid <pid>)\n<time> Added 192.168.42.2/24 to vap-br0\n<time> Added rule 7001: to 192.168.42.0/24 lookup main\n<time> Active on vap-br0\n<time> Setting changed: host_octet=7\n<time> Removed old 192.168.42.2/24 from vap-br0\n<time> Added 192.168.42.7/24 to vap-br0\n<time> Setting changed: rule_pref=7005\n<time> Rule priority changed from 7001 to 7005; removed the rules at 7001\n<time> Added rule 7005: to 192.168.42.0/24 lookup main\n<time> Setting changed: rule_pref=7001\n<time> Rule priority changed from 7005 to 7001; removed the rules at 7005\n<time> Added rule 7001: to 192.168.42.0/24 lookup main\n<time> Restarted org.test.app from the WebUI\n<time> Setting changed: ipv6=1\n<time> IPv6 on: vap-br0 now accepts OpenWrt's router advertisements (no default route)\n<time> IPv6 rules: oif vap-br0 lookup main\n<time> IPv6 rules: oif vap-br0 lookup main, to fd00:42::/64 lookup main, to fd00:43::/48 lookup main\n<time> Setting changed: ipv6=0\n<time> Removed IPv6 rules 7001\n<time> IPv6 off: settings on vap-br0 restored\n<time> Setting changed: enabled=0\n<time> Removed IPv4 rule 7001\n<time> Removed 192.168.42.7/24 from vap-br0\n<time> inactive: Turned off in settings\n<time> Setting changed: enabled=1\n<time> Added 192.168.42.7/24 to vap-br0\n<time> Added rule 7001: to 192.168.42.0/24 lookup main\n<time> Active on vap-br0\n<time> Monitoring turned off\n<time> Watcher stopped\n<time> Monitoring turned on\n<time> Watcher started (pid <pid>)\nNewest at the bottom. Updates by itself while Main shows Live; the refresh button in the top bar re-reads it. /data/adb/nyxbridge/nyxbridge.log\nDiagnostics\nEverything useful for a bug report in one block of text: the status, VirtualAP's state, the settings, the routing rules, the bridge's addresses and the end of the log. It names your hotspot's addresses; nothing is sent anywhere.\nShow\nCopy diagnostics",
+ "refreshed_about": "NyxBridge\n<version> · by poqdavid\nWhat it does\nIn managed mode VirtualAP hands the hotspot to an OpenWrt container and leaves its bridge, vap-br0, without an address, so the phone itself is not on the hotspot network. NyxBridge gives the phone an address there and adds the routing rule Android needs, so apps like LocalSend can reach hotspot devices.\nIt only acts while VirtualAP runs in managed mode, and removes everything it added when the hotspot stops.\nAppearance\nTheme\nFollowing the device setting — currently light.\nSystem\nLight\nDark\nMaterial You\nUse the colours from your wallpaper\nFullscreen\nHide the status and navigation bars\nCredits\nVirtualAP by ravindu644 creates the hotspot and the managed-mode bridge NyxBridge attaches to.\nDroidspaces by ravindu644 runs the OpenWrt container that owns the hotspot network.\nThe idea of a low-priority routing rule for the hotspot subnet comes from studying droidspaces-lan-ip by yashoswalyo and VirtualAP’s routed mode. NyxBridge’s code is its own.\nThe WebUI shares its framework with NyxSUSFS and NyxProps. Issues and translations welcome.\nConfig & logs: /data/adb/nyxbridge\nLicense\nCopyright © 2026 poqdavid\nNyxBridge is free software under the GNU Affero General Public License v3.0 (AGPL-3.0-only). You may redistribute and modify it under that license. It comes with ABSOLUTELY NO WARRANTY.\nLicense text and notices: /data/adb/modules/nyxbridge/LICENSE, NOTICE.md\nSource code: github.com/poqdavid/nyxbridge",
+ "toasts": [
+  "Checked",
+  "IPv6 off",
+  "IPv6 on",
+  "Monitoring off",
+  "Monitoring on",
+  "Phone address set to .7",
+  "Restarted org.test.app",
+  "Rule priority set to 7001",
+  "Rule priority set to 7005",
+  "Turned off; address and rule removed",
+  "Turned on",
+  "Watcher started",
+  "org.test.app will be restarted when the bridge comes up"
+ ],
+ "settings_after_language": "Language\nInterface language\nEnglish is the source language. Other languages are community translations and may be incomplete; missing text falls back to English.\nEnglish\nBridge\nPhone address on the bridge\nLets apps on the phone reach hotspot devices while VirtualAP runs in managed mode.\nIPv6\nAlso take an address from OpenWrt's announcements. Never uses OpenWrt as the phone's IPv6 gateway. Off by default.\nPhone address\n192.168.42.\nSave\nOpenWrt hands out .100–.249 by DHCP; keep the phone outside that range.\nRouting\nRule priority\nWhere the routing rule sits among Android's rules; lower numbers are looked at first. Changing it moves the rules over. Default 7001.\nSave\nKeep it below 10000, where Android's own rules start.\nApp restart\nRestart an app when the bridge comes up\nApps like LocalSend look for networks only when they start. When the phone gets its hotspot address, NyxBridge closes this app and opens it again - only if it was running. Leave empty for none.\nSave\nRestart it now\nAll settings are saved in /data/adb/nyxbridge/config.sh.",
+ "config": "enabled=1\nmonitor=1\nipv6=0\nhost_octet=7\nrule_pref=7001\nrestart_app=org.test.app\nwebui_theme=system\nwebui_monet=0\nwebui_fullscreen=0"
+}
