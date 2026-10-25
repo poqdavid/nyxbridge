@@ -1,0 +1,4 @@
+shell=busybox
+disable=SC2093
+source-path=SCRIPTDIR
+external-sources=true

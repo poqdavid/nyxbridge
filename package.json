@@ -14,6 +14,7 @@
 		"typecheck": "tsc -p webui",
 		"format:rust": "cargo fmt",
 		"format:sh": "prettier --write \"**/*.sh\"",
-		"format:webui": "prettier --write \"webui/**/*.{ts,mjs}\""
+		"format:webui": "prettier --write \"webui/**/*.{ts,mjs}\"",
+		"format:check": "prettier --check \"webui/**/*.{ts,mjs}\" \"**/*.sh\""
 	}
 }

@@ -51,7 +51,7 @@ license.
   NyxBridge implements these in its own code; none of droidspaces-lan-ip's
   code is included.
 - **Duck ToolBox** by Eltavine, MIT — <https://github.com/eltavine/Duck-ToolBox>:
-  the Telegram build caption.
+  the CI job layout, the Telegram build caption and the installer checks.
 
 ## Icons
 

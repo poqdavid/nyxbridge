@@ -45,14 +45,17 @@ nyxbridge_config_check() {
     ui_print "  Keep current settings in 10 seconds"
     ui_print "****************************************"
     local timeout=10
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
     while true; do
-        local current_time=$(date +%s)
+        local current_time
+        current_time=$(date +%s)
         if [ $((current_time - start_time)) -ge $timeout ]; then
             ui_print "[-] Timeout: keeping current settings"
             break
         fi
-        local key_event=$(timeout 0.5 getevent -l 2> /dev/null)
+        local key_event
+        key_event=$(timeout 0.5 getevent -l 2> /dev/null)
         if echo "$key_event" | grep -q "KEY_VOLUMEUP"; then
             ui_print "[-] Resetting NyxBridge settings to default..."
             rm -rf ${PERSISTENT_DIR}
