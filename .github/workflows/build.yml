@@ -4,7 +4,7 @@ name: Build
 # side and feed one Package job:
 #   Rust checks       fmt, clippy and tests on the host
 #   arm64 binary      static aarch64 bin/nyxbridge, built with cross (musl)
-#   Boot and watcher  service.sh and the watcher in 19 device scenarios (tests/boot)
+#   Boot and watcher  service.sh and the watcher in 20 device scenarios (tests/boot)
 #   WebUI             format check, type-check, bundle webroot/js/app.js
 #   WebUI tests       every page and setting in Chromium against the real
 #                     program, sh and mksh (tests/webui)

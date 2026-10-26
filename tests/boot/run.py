@@ -6,7 +6,8 @@ in its own network, mount and PID namespaces: service.sh starts the watcher
 in a chroot with a static busybox, then the scenario's device events follow
 (VirtualAP starting, stopping or changing its gateway, netd flushing rules,
 OpenWrt announcing an IPv6 prefix, settings changed from the WebUI or by
-hand, the module disabled in the manager, the Action button, uninstall).
+hand, the module disabled in the manager, the Action button, uninstall, the
+watcher told to stop while it is still starting).
 After each step the run waits until the watcher has settled and records:
 
   * the step's exit code and output (for commands),
@@ -183,6 +184,10 @@ SCENARIOS = {
         ("the watcher is killed", "kill_watcher"),
         ("netd flushes the rule", "netd_flush"),
         ("Action button", "script", "action.sh"),
+    ]},
+    "stopped-while-starting": {"va": "up", "config": {"monitor": "0"}, "steps": [
+        ("boot; the watcher is told to stop while it starts", "boot_stop_while_starting"),
+        ("monitoring on from the WebUI", "ctl", "set", "monitor", "1"),
     ]},
 }
 
@@ -443,6 +448,47 @@ class Scenario:
     def do_kill_watcher(self):
         for pid in self.nyx_procs(daemon=True):
             os.kill(int(pid), 9)
+
+    def do_boot_stop_while_starting(self):
+        # Monitoring turned on and straight off again, or uninstall right after
+        # it: the watcher gets SIGTERM while it is still starting. stop() sends
+        # it as soon as daemon.pid names the watcher, and so does this step.
+        # Until then the log is a FIFO: a watcher that finds monitoring off
+        # waits at its first log line, after daemon.pid, for as long as the
+        # step takes. What it writes there ends up in the log afterwards.
+        log = f"{self.root}{DATA}/nyxbridge.log"
+        before = open(log, "rb").read() if os.path.exists(log) else None
+        if before is not None:
+            os.remove(log)
+        os.mkfifo(log, 0o644)
+        r = self.script("service.sh")
+        self.wait_for(self.watcher_pid, "daemon.pid naming the watcher")
+        pid = self.watcher_pid()
+        os.kill(pid, 15)  # SIGTERM
+        got = b""
+        fd = os.open(log, os.O_RDONLY | os.O_NONBLOCK)  # lets the watcher's open() return
+        try:
+            self.wait_for(lambda: str(pid) not in self.nyx_procs(daemon=True), "the watcher to finish")
+            while chunk := os.read(fd, 65536):
+                got += chunk
+        except BlockingIOError:
+            pass
+        finally:
+            os.close(fd)
+        os.remove(log)
+        if before is not None or got:
+            with open(log, "wb") as f:
+                f.write((before or b"") + got)
+            os.chmod(log, 0o644)
+        return r
+
+    def watcher_pid(self):
+        """The pid in daemon.pid, if that process is a running watcher."""
+        try:
+            pid = open(f"{self.root}{RUN}/daemon.pid").read().split()[0]
+        except (OSError, IndexError):
+            return None
+        return int(pid) if pid in self.nyx_procs(daemon=True) else None
 
     # ---- observing --------------------------------------------------------------
     def pref(self):

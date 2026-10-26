@@ -6,7 +6,7 @@ needs a phone or VirtualAP.
 
 | Suite | What it checks | Run it |
 | --- | --- | --- |
-| Boot and watcher | `service.sh` and the watcher in 19 device scenarios: every Android tool call, every file written and every address, rule and IPv6 setting on the bridge, step by step | `sudo python3 tests/boot/run.py --binary <static host build>` |
+| Boot and watcher | `service.sh` and the watcher in 20 device scenarios: every Android tool call, every file written and every address, rule and IPv6 setting on the bridge, step by step | `sudo python3 tests/boot/run.py --binary <static host build>` |
 | WebUI | Every page and setting in Chromium against the real program, live updates, route checks, diagnostics, theme and fullscreen, bridge behaviour and system-bar padding | `sudo node tests/webui/run.cjs` |
 | Installer | `customize.sh` refuses unsupported CPUs and managers before it touches anything | `python3 scripts/test-install.py` |
 
@@ -25,7 +25,8 @@ into it and runs `service.sh` in a chroot with a static busybox, in private
 network, mount and PID namespaces. Then the scenario's events follow:
 VirtualAP starting, stopping or moving to another subnet, netd flushing
 the rule, settings changed from the WebUI or by hand, the Action button,
-uninstall. After each step the run waits until the watcher has settled and
+uninstall, the watcher killed or told to stop while it is still starting.
+After each step the run waits until the watcher has settled and
 compares what changed with `tests/boot/expected/<scenario>.json`. `am`,
 `monkey` and `getprop` are logging stubs.
 
