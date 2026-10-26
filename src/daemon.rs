@@ -256,6 +256,14 @@ pub fn run(p: &Paths) -> ExitCode {
     let Some(_lock) = lock::try_acquire(&p.daemon_lock) else {
         return ExitCode::SUCCESS;
     };
+    // stop() sends SIGTERM as soon as daemon.pid names this process, so the
+    // stop signals are blocked first: one that arrives while the watcher is
+    // still starting waits in the signalfd instead of killing it before it
+    // logs and removes daemon.pid.
+    let sig = match sys::stop_signals_fd() {
+        Ok(f) => f,
+        Err(_) => return fail(p, "Could not set up signal handling; stopping"),
+    };
     let me = std::process::id();
     let _ = std::fs::write(&p.daemon_pid, format!("{me} {}\n", lock::proc_start(me).unwrap_or_default()));
 
@@ -266,10 +274,6 @@ pub fn run(p: &Paths) -> ExitCode {
     }
     leave_app_cgroups(p);
 
-    let sig = match sys::stop_signals_fd() {
-        Ok(f) => f,
-        Err(_) => return fail(p, "Could not set up signal handling; stopping"),
-    };
     let ev = match sys::netlink_socket(GROUPS) {
         Ok((f, _)) => f,
         Err(e) => return fail(p, &format!("Could not open the netlink event socket ({e}); stopping")),
