@@ -116,7 +116,6 @@
     "vap-br0": {
      "addrs": [],
      "routes": [
-      "fd00:42::/64 proto kernel table main",
       "fd00:43::/48 via fe80::1 proto ra table main",
       "fe80::/64 proto kernel table main"
      ],

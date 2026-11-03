@@ -29,6 +29,7 @@ bridges and veth, a statically linked busybox and a static host build, e.g.
 import argparse
 import difflib
 import fcntl
+import ipaddress
 import json
 import os
 import re
@@ -530,11 +531,17 @@ class Scenario:
         info = addrs[0].get("addr_info", []) if addrs else []
         br["addrs"] = sorted(f"{a['family']} {a['local']}/{a['prefixlen']}{'' if a.get('valid_life_time', 4294967295) == 4294967295 else ' dynamic'}"
                              for a in info if a.get("scope") == "global")
+        v6 = [ipaddress.ip_address(a["local"]) for a in info if a["family"] == "inet6"]
         routes = []
         for fam in ["-4", "-6"]:
             for r in json.loads(self.sh_ip("-j", fam, "route", "show", "table", "all", "dev", BR) or "[]"):
                 if r.get("table") == "local" or r.get("type", "unicast") != "unicast" or r["dst"].startswith("ff00::"):
                     continue
+                # Linux 6.19 and the stable kernels that took c7dc5b52 delete the prefix route with an address that
+                # has a lifetime; older ones leave it until it expires. Either way it is the kernel's, not NyxBridge's.
+                if fam == "-6" and r.get("protocol") == "kernel" and "/" in r["dst"]:
+                    if not any(ip in ipaddress.ip_network(r["dst"]) for ip in v6):
+                        continue
                 gw = f" via {r['gateway']}" if r.get("gateway") else ""
                 routes.append(f"{r['dst']}{gw} proto {r.get('protocol', '?')} table {r.get('table', 'main')}")
         br["routes"] = sorted(routes)
