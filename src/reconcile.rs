@@ -23,20 +23,27 @@ fn same_instance(p: &Paths, br: &str, idx: &str) -> bool {
     !br.is_empty() && !idx.is_empty() && if_index(p, br).map(|i| i.to_string()).as_deref() == Some(idx)
 }
 
-pub fn rules_at(nl: &Sock, family: u8, pref: u32) -> Vec<rtnl::Rule> {
+pub fn owned_bridges(p: &Paths, a: &Applied) -> Vec<String> {
+    let mut v = vec![Va::load(p).bridge, conf::DEFAULT_BRIDGE.to_string()];
+    v.extend([&a.a4_br, &a.a6_br].into_iter().filter(|b| !b.is_empty()).cloned());
+    v.sort();
+    v.dedup();
+    v
+}
+
+pub fn ours_at(nl: &Sock, family: u8, pref: u32, bridges: &[String]) -> Vec<rtnl::Rule> {
     rtnl::rules(nl, family)
         .unwrap_or_default()
         .into_iter()
-        .filter(|r| r.pref == pref)
+        .filter(|r| r.pref == pref && r.is_nyxbridge(bridges))
         .collect()
 }
 
-pub fn rule_flush(nl: &Sock, family: u8, pref: u32) {
-    for _ in 0..64 {
-        if rtnl::del_rule_pref(nl, family, pref).is_err() {
-            break;
-        }
-    }
+pub fn rule_flush(nl: &Sock, family: u8, pref: u32, bridges: &[String]) -> usize {
+    ours_at(nl, family, pref, bridges)
+        .iter()
+        .filter(|r| rtnl::del_rule(nl, family, r).is_ok())
+        .count()
 }
 
 fn parse_cidr(s: &str) -> Option<(IpAddr, u8)> {
@@ -232,9 +239,10 @@ impl Check<'_> {
         self.a.a4_idx = idx.to_string();
 
         let pref = self.cfg.pref;
-        let rules = rules_at(self.nl, AF_INET, pref);
+        let bridges = owned_bridges(self.p, &self.a);
+        let rules = ours_at(self.nl, AF_INET, pref, &bridges);
         if rules.len() != 1 || !rules[0].is_plain_to(&subnet, 24, RT_TABLE_MAIN) {
-            rule_flush(self.nl, AF_INET, pref);
+            rule_flush(self.nl, AF_INET, pref, &bridges);
             if rtnl::add_rule(self.nl, AF_INET, pref, Sel::To(subnet, 24), RT_TABLE_MAIN).is_ok() {
                 self.log(&format!("Added rule {pref}: to {subnet}/24 lookup main"));
             } else {
@@ -269,8 +277,9 @@ impl Check<'_> {
         let lines: Vec<String> = targets.iter().map(Target::line).collect();
         let sig = lines.join(";");
         let pref = self.cfg.pref;
-        if rules_at(self.nl, AF_INET6, pref).len() != targets.len() || sig != self.a.sig6 {
-            rule_flush(self.nl, AF_INET6, pref);
+        let bridges = owned_bridges(self.p, &self.a);
+        if ours_at(self.nl, AF_INET6, pref, &bridges).len() != targets.len() || sig != self.a.sig6 {
+            rule_flush(self.nl, AF_INET6, pref, &bridges);
             let mut fails = Vec::new();
             for t in &targets {
                 let sel = match t.prefix {
@@ -298,8 +307,8 @@ impl Check<'_> {
 
     fn remove_v6_only(&mut self) {
         let pref = self.cfg.pref;
-        if !rules_at(self.nl, AF_INET6, pref).is_empty() {
-            rule_flush(self.nl, AF_INET6, pref);
+        let bridges = owned_bridges(self.p, &self.a);
+        if rule_flush(self.nl, AF_INET6, pref, &bridges) > 0 {
             self.log(&format!("Removed IPv6 rules {pref}"));
         }
         if !self.a.a6_idx.is_empty() {
@@ -313,12 +322,11 @@ impl Check<'_> {
 }
 
 pub fn remove_all(p: &Paths, nl: &Sock, pref: u32, a: &mut Applied) {
-    if !rules_at(nl, AF_INET, pref).is_empty() {
-        rule_flush(nl, AF_INET, pref);
+    let bridges = owned_bridges(p, a);
+    if rule_flush(nl, AF_INET, pref, &bridges) > 0 {
         conf::log(p, &format!("Removed IPv4 rule {pref}"));
     }
-    if !rules_at(nl, AF_INET6, pref).is_empty() {
-        rule_flush(nl, AF_INET6, pref);
+    if rule_flush(nl, AF_INET6, pref, &bridges) > 0 {
         conf::log(p, &format!("Removed IPv6 rules {pref}"));
     }
     if !a.a4_addr.is_empty() && same_instance(p, &a.a4_br, &a.a4_idx) {
@@ -342,10 +350,10 @@ fn clear_old_pref(p: &Paths, nl: &Sock, a: &Applied, pref: u32) {
     if old == pref {
         return;
     }
+    let bridges = owned_bridges(p, a);
     let mut removed = false;
     for fam in [AF_INET, AF_INET6] {
-        if !rules_at(nl, fam, old).is_empty() {
-            rule_flush(nl, fam, old);
+        if rule_flush(nl, fam, old, &bridges) > 0 {
             removed = true;
         }
     }

@@ -60,8 +60,9 @@ fn gather(p: &Paths, nl: &Sock) -> Status {
         cfg,
         va,
     };
-    let r4 = reconcile::rules_at(nl, AF_INET, s.cfg.pref);
-    let r6 = reconcile::rules_at(nl, AF_INET6, s.cfg.pref);
+    let bridges = reconcile::owned_bridges(p, &crate::state::Applied::load(p));
+    let r4 = reconcile::ours_at(nl, AF_INET, s.cfg.pref, &bridges);
+    let r6 = reconcile::ours_at(nl, AF_INET6, s.cfg.pref, &bridges);
     if let Some((base, _)) = conf::parse_gw(&s.va.gateway) {
         let subnet = Ipv4Addr::new(base[0], base[1], base[2], 0);
         let host = Ipv4Addr::new(base[0], base[1], base[2], s.cfg.host);
@@ -318,8 +319,9 @@ fn cleanup(p: &Paths) -> ExitCode {
             let cfg = Config::load(p);
             let mut a = crate::state::Applied::load(p);
             if let Some(old) = conf::num_in(&a.pref, 1, 32765).map(|v| v as u32).filter(|&o| o != cfg.pref) {
+                let bridges = reconcile::owned_bridges(p, &a);
                 for fam in [AF_INET, AF_INET6] {
-                    reconcile::rule_flush(&nl, fam, old);
+                    reconcile::rule_flush(&nl, fam, old, &bridges);
                 }
             }
             reconcile::remove_all(p, &nl, cfg.pref, &mut a);

@@ -273,6 +273,24 @@ impl Rule {
             && !self.extra
             && self.flags & FIB_RULE_INVERT == 0
     }
+
+    pub fn is_nyxbridge(&self, bridges: &[String]) -> bool {
+        let plain = self.action == FR_ACT_TO_TBL
+            && self.src.is_none()
+            && self.iif.is_none()
+            && self.fwmark.is_none()
+            && self.uid_range.is_none()
+            && self.suppress_prefixlen.is_none()
+            && self.tos == 0
+            && !self.extra
+            && self.flags & FIB_RULE_INVERT == 0;
+        plain
+            && match (&self.dst, &self.oif) {
+                (Some(_), None) => true,
+                (None, Some(o)) => bridges.iter().any(|b| b == o),
+                _ => false,
+            }
+    }
 }
 
 fn parse_rule(p: &[u8]) -> Option<Rule> {
@@ -352,10 +370,29 @@ fn add_rule_msg(family: u8, pref: u32, sel: Sel, table: u32) -> Msg {
     m
 }
 
-pub fn del_rule_pref(s: &Sock, family: u8, pref: u32) -> io::Result<()> {
+pub fn del_rule(s: &Sock, family: u8, r: &Rule) -> io::Result<()> {
+    s.exec(del_rule_msg(family, r))
+}
+
+fn del_rule_msg(family: u8, r: &Rule) -> Msg {
     let mut h = [0u8; 12];
     h[0] = family;
-    s.exec(Msg::new(RTM_DELRULE, NLM_F_REQUEST, &h).attr_u32(FRA_PRIORITY, pref))
+    h[4] = if r.table < 256 { r.table as u8 } else { 0 };
+    h[7] = FR_ACT_TO_TBL;
+    if let Some((_, len)) = &r.dst {
+        h[1] = *len;
+    }
+    let mut m = Msg::new(RTM_DELRULE, NLM_F_REQUEST, &h).attr_u32(FRA_PRIORITY, r.pref);
+    if let Some((ip, _)) = &r.dst {
+        m = m.attr(FRA_DST, &ip_bytes(ip));
+    }
+    if let Some(o) = &r.oif {
+        m = m.attr_str(FRA_OIFNAME, o);
+    }
+    if r.table >= 256 {
+        m = m.attr_u32(FRA_TABLE, r.table);
+    }
+    m
 }
 
 #[derive(Clone, Debug)]
@@ -678,6 +715,112 @@ mod tests {
             &[(FRA_PRIORITY, 32000u32.to_ne_bytes().to_vec())],
         );
         assert_eq!(parse_rule(&p).unwrap().text(), "from all unreachable");
+    }
+
+    #[test]
+    fn only_rules_in_nyxbridges_shape_count_as_its_own() {
+        let br = vec!["vap-br0".to_string()];
+        let pref = |n: u32| (FRA_PRIORITY, n.to_ne_bytes().to_vec());
+        let table = |n: u32| (FRA_TABLE, n.to_ne_bytes().to_vec());
+        let rule = |family, dst_len, tbl, action, attrs: &[(u16, Vec<u8>)]| {
+            parse_rule(&rule_payload(family, dst_len, tbl, action, attrs)).unwrap()
+        };
+
+        let v4 = rule(AF_INET, 24, 254, FR_ACT_TO_TBL, &[pref(7001), (FRA_DST, vec![192, 168, 42, 0])]);
+        assert!(v4.is_nyxbridge(&br));
+        let mut p6 = vec![0xfd, 0, 0, 0x42];
+        p6.extend_from_slice(&[0; 12]);
+        let v6_to = rule(AF_INET6, 64, 254, FR_ACT_TO_TBL, &[pref(7001), (FRA_DST, p6.clone())]);
+        assert!(v6_to.is_nyxbridge(&br));
+        let v6_oif = rule(
+            AF_INET6,
+            0,
+            0,
+            FR_ACT_TO_TBL,
+            &[pref(7001), table(1081), (FRA_OIFNAME, b"vap-br0\0".to_vec())],
+        );
+        assert!(v6_oif.is_nyxbridge(&br));
+
+        let sink = rule(
+            AF_INET6,
+            64,
+            0,
+            FR_ACT_BLACKHOLE,
+            &[pref(7001), (FRA_DST, p6.clone()), (FRA_IIFNAME, b"rmnet_data1\0".to_vec())],
+        );
+        assert!(!sink.is_nyxbridge(&br));
+        let sink_lookup = rule(
+            AF_INET6,
+            64,
+            254,
+            FR_ACT_TO_TBL,
+            &[pref(7001), (FRA_DST, p6.clone()), (FRA_IIFNAME, b"rmnet_data1\0".to_vec())],
+        );
+        assert!(!sink_lookup.is_nyxbridge(&br));
+        let link = rule(AF_INET6, 0, 254, FR_ACT_TO_TBL, &[pref(7002), (FRA_OIFNAME, b"ap0\0".to_vec())]);
+        assert!(!link.is_nyxbridge(&br));
+
+        let from = rule(AF_INET, 24, 254, FR_ACT_TO_TBL, &[pref(7001), (FRA_SRC, vec![10, 0, 0, 0])]);
+        assert!(!from.is_nyxbridge(&br));
+        let both = rule(
+            AF_INET6,
+            64,
+            254,
+            FR_ACT_TO_TBL,
+            &[pref(7001), (FRA_DST, p6.clone()), (FRA_OIFNAME, b"vap-br0\0".to_vec())],
+        );
+        assert!(!both.is_nyxbridge(&br));
+        let unreach = rule(AF_INET, 24, 0, FR_ACT_UNREACHABLE, &[pref(7001), (FRA_DST, vec![192, 168, 42, 0])]);
+        assert!(!unreach.is_nyxbridge(&br));
+        let bare = rule(AF_INET, 0, 254, FR_ACT_TO_TBL, &[pref(7001)]);
+        assert!(!bare.is_nyxbridge(&br));
+
+        assert!(!v6_oif.is_nyxbridge(&["vap-br1".to_string()]));
+        assert!(v6_oif.is_nyxbridge(&["vap-br1".to_string(), "vap-br0".to_string()]));
+    }
+
+    #[test]
+    fn deletes_name_one_rule_like_iproute2() {
+        let check = |m: Msg, payload: &[u8]| {
+            let b = m.test_bytes();
+            let msg = &nl::messages(&b)[0];
+            assert_eq!(msg.ty, RTM_DELRULE);
+            assert_eq!(msg.flags, NLM_F_REQUEST);
+            assert_eq!(msg.payload, payload);
+        };
+        let r = parse_rule(&rule_payload(
+            AF_INET,
+            24,
+            254,
+            FR_ACT_TO_TBL,
+            &[(FRA_PRIORITY, 7001u32.to_ne_bytes().to_vec()), (FRA_DST, vec![192, 168, 42, 0])],
+        ))
+        .unwrap();
+        check(
+            del_rule_msg(AF_INET, &r),
+            &[
+                2, 24, 0, 0, 254, 0, 0, 1, 0, 0, 0, 0, 8, 0, 6, 0, 0x59, 0x1b, 0, 0, 8, 0, 1, 0, 192, 168, 42, 0,
+            ],
+        );
+        let r = parse_rule(&rule_payload(
+            AF_INET6,
+            0,
+            0,
+            FR_ACT_TO_TBL,
+            &[
+                (FRA_PRIORITY, 7001u32.to_ne_bytes().to_vec()),
+                (FRA_TABLE, 1081u32.to_ne_bytes().to_vec()),
+                (FRA_OIFNAME, b"vap-br0\0".to_vec()),
+            ],
+        ))
+        .unwrap();
+        check(
+            del_rule_msg(AF_INET6, &r),
+            &[
+                10, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 8, 0, 6, 0, 0x59, 0x1b, 0, 0, 12, 0, 17, 0, b'v', b'a', b'p', b'-', b'b', b'r', b'0',
+                0, 8, 0, 15, 0, 0x39, 0x04, 0, 0,
+            ],
+        );
     }
 
     #[test]
