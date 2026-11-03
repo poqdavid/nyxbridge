@@ -291,6 +291,14 @@ impl Rule {
                 _ => false,
             }
     }
+
+    pub fn fits_delete_of(&self, ours: &Rule) -> bool {
+        self.pref == ours.pref
+            && self.action == FR_ACT_TO_TBL
+            && self.table == ours.table
+            && (ours.dst.is_none() || self.dst == ours.dst)
+            && (ours.oif.is_none() || self.oif == ours.oif)
+    }
 }
 
 fn parse_rule(p: &[u8]) -> Option<Rule> {
@@ -777,6 +785,78 @@ mod tests {
 
         assert!(!v6_oif.is_nyxbridge(&["vap-br1".to_string()]));
         assert!(v6_oif.is_nyxbridge(&["vap-br1".to_string(), "vap-br0".to_string()]));
+    }
+
+    #[test]
+    fn a_delete_can_fit_rules_with_extra_selectors() {
+        let pref = |n: u32| (FRA_PRIORITY, n.to_ne_bytes().to_vec());
+        let rule = |family, dst_len, tbl, action, attrs: &[(u16, Vec<u8>)]| {
+            parse_rule(&rule_payload(family, dst_len, tbl, action, attrs)).unwrap()
+        };
+        let dst = (FRA_DST, vec![192, 168, 42, 0]);
+        let ours = rule(AF_INET, 24, 254, FR_ACT_TO_TBL, &[pref(7001), dst.clone()]);
+
+        let with_iif = rule(
+            AF_INET,
+            24,
+            254,
+            FR_ACT_TO_TBL,
+            &[pref(7001), dst.clone(), (FRA_IIFNAME, b"lo\0".to_vec())],
+        );
+        assert!(with_iif.fits_delete_of(&ours));
+        let with_mark = rule(
+            AF_INET,
+            24,
+            254,
+            FR_ACT_TO_TBL,
+            &[pref(7001), dst.clone(), (FRA_FWMARK, 5u32.to_ne_bytes().to_vec())],
+        );
+        assert!(with_mark.fits_delete_of(&ours));
+
+        let blackhole = rule(
+            AF_INET,
+            24,
+            0,
+            FR_ACT_BLACKHOLE,
+            &[pref(7001), dst.clone(), (FRA_IIFNAME, b"lo\0".to_vec())],
+        );
+        assert!(!blackhole.fits_delete_of(&ours));
+        let other_net = rule(AF_INET, 24, 254, FR_ACT_TO_TBL, &[pref(7001), (FRA_DST, vec![10, 9, 9, 0])]);
+        assert!(!other_net.fits_delete_of(&ours));
+        let other_table = rule(AF_INET, 24, 100, FR_ACT_TO_TBL, &[pref(7001), dst.clone()]);
+        assert!(!other_table.fits_delete_of(&ours));
+        let other_pref = rule(AF_INET, 24, 254, FR_ACT_TO_TBL, &[pref(7002), dst.clone()]);
+        assert!(!other_pref.fits_delete_of(&ours));
+
+        let table = (FRA_TABLE, 1081u32.to_ne_bytes().to_vec());
+        let oif_ours = rule(
+            AF_INET6,
+            0,
+            0,
+            FR_ACT_TO_TBL,
+            &[pref(7001), table.clone(), (FRA_OIFNAME, b"vap-br0\0".to_vec())],
+        );
+        let ap0 = rule(
+            AF_INET6,
+            0,
+            0,
+            FR_ACT_TO_TBL,
+            &[pref(7001), table.clone(), (FRA_OIFNAME, b"ap0\0".to_vec())],
+        );
+        assert!(!ap0.fits_delete_of(&oif_ours));
+        let same_if_more = rule(
+            AF_INET6,
+            0,
+            0,
+            FR_ACT_TO_TBL,
+            &[
+                pref(7001),
+                table.clone(),
+                (FRA_OIFNAME, b"vap-br0\0".to_vec()),
+                (FRA_FWMARK, 1u32.to_ne_bytes().to_vec()),
+            ],
+        );
+        assert!(same_if_more.fits_delete_of(&oif_ours));
     }
 
     #[test]

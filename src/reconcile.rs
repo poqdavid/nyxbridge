@@ -40,10 +40,24 @@ pub fn ours_at(nl: &Sock, family: u8, pref: u32, bridges: &[String]) -> Vec<rtnl
 }
 
 pub fn rule_flush(nl: &Sock, family: u8, pref: u32, bridges: &[String]) -> usize {
-    ours_at(nl, family, pref, bridges)
-        .iter()
-        .filter(|r| rtnl::del_rule(nl, family, r).is_ok())
-        .count()
+    let at_pref: Vec<rtnl::Rule> = rtnl::rules(nl, family)
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|r| r.pref == pref)
+        .collect();
+    let mut gone = 0;
+    for (i, r) in at_pref.iter().enumerate() {
+        if !r.is_nyxbridge(bridges) {
+            continue;
+        }
+        if at_pref[..i].iter().any(|o| !o.is_nyxbridge(bridges) && o.fits_delete_of(r)) {
+            continue;
+        }
+        if rtnl::del_rule(nl, family, r).is_ok() {
+            gone += 1;
+        }
+    }
+    gone
 }
 
 fn parse_cidr(s: &str) -> Option<(IpAddr, u8)> {
