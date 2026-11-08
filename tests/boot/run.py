@@ -7,7 +7,8 @@ in a chroot with a static busybox, then the scenario's device events follow
 (VirtualAP starting, stopping or changing its gateway, netd flushing rules,
 OpenWrt announcing an IPv6 prefix, settings changed from the WebUI or by
 hand, the module disabled in the manager, the Action button, uninstall, the
-watcher told to stop while it is still starting).
+watcher told to stop while it is still starting, VirtualAP's own rules in
+routed mode).
 After each step the run waits until the watcher has settled and records:
 
   * the step's exit code and output (for commands),
@@ -72,10 +73,33 @@ exit 0
 
 STATE_BRIDGED = f"mode=bridged\ncontainer=openwrt\nbridge={BR}\ngateway=192.168.42.1\n"
 
+# VirtualAP 3.0.0's rules in routed mode, sharing the upstream's /64 with the
+# clients: return paths at 7000 (plain `to <subnet> lookup main`, just like
+# NyxBridge's rule), the IPv6 sink at 7001 (NyxBridge's default), the IPv6
+# link rule at 7002 and the upstream's table at 7010.
+V6NET = "2001:db8:1:2::/64"
+VA_ROUTED_RULES = [
+    ("-4", "rule", "add", "pref", "7000", "to", "192.168.42.0/24", "lookup", "main"),
+    ("-4", "rule", "add", "pref", "7010", "iif", "ap0", "lookup", "1012"),
+    ("-6", "rule", "add", "pref", "7000", "to", V6NET, "lookup", "main"),
+    ("-6", "rule", "add", "pref", "7001", "iif", "rmnet_data2", "to", V6NET, "blackhole"),
+    ("-6", "rule", "add", "pref", "7002", "oif", "ap0", "lookup", "main"),
+    ("-6", "rule", "add", "pref", "7010", "iif", "ap0", "lookup", "1012"),
+]
+# What its monitor does when the upstream changes: the 7010 rules move to the
+# new upstream's table.
+VA_NEW_UPSTREAM = [
+    ("-4", "rule", "del", "pref", "7010"),
+    ("-6", "rule", "del", "pref", "7010"),
+    ("-4", "rule", "add", "pref", "7010", "iif", "ap0", "lookup", "1031"),
+    ("-6", "rule", "add", "pref", "7010", "iif", "ap0", "lookup", "1031"),
+]
+
 # name -> dict(config overrides or None for no data folder, VirtualAP at boot, flags, steps)
 #   va:    None (not running) | "up" (managed mode, bridge up) | "old" (as up, but a
 #          VirtualAP before 2.0.5: IPv6 left on and a default route from OpenWrt)
 #          | "state" (run.state without the bridge) | "routed"
+#   rules: `ip` commands for rules of others that are already there at boot
 #   steps: (label, action, *args); see Scenario.do_<action>
 SCENARIOS = {
     "default": {"va": "up", "steps": [
@@ -95,6 +119,11 @@ SCENARIOS = {
         ("boot", "boot"),
         ("the bridge comes up", "bridge_up"),
         ("the bridge goes away", "bridge_down"),
+    ]},
+    "routed-virtualap-rules": {"va": "routed", "config": {"rule_pref": "7000"}, "rules": VA_ROUTED_RULES, "steps": [
+        ("boot; rule_pref=7000 in config.sh", "boot"),
+        ("VirtualAP's monitor follows a new upstream", "va_rules", *VA_NEW_UPSTREAM),
+        ("refused: VirtualAP's own priority", "ctl", "set", "rule_pref", "7000"),
     ]},
     "routed": {"va": "routed", "steps": [
         ("boot", "boot"),
@@ -346,6 +375,8 @@ class Scenario:
             self.write_state(state)
         elif va == "routed":
             self.write_state("mode=routed\ngateway=192.168.42.1\n")
+        for cmd in self.sc.get("rules", []):
+            self.sh_ip(*cmd)
         if self.sc.get("app"):
             self.start_app()
 
@@ -368,7 +399,8 @@ class Scenario:
     # A device event made of several changes (VirtualAP deleting its bridge and
     # its run.state, say) reaches the watcher as one: it is stopped while they
     # are made, so the result doesn't depend on how fast this machine makes them.
-    FROZEN = {"va_up", "va_down", "va_state", "bridge_up", "bridge_down", "netd_flush", "flag", "flags_seq", "edit_config", "ra"}
+    FROZEN = {"va_up", "va_down", "va_state", "va_rules", "bridge_up", "bridge_down", "netd_flush", "flag", "flags_seq",
+              "edit_config", "ra"}
 
     def frozen(self, action, fn, args):
         pids = self.nyx_procs(daemon=True) if action in self.FROZEN else []
@@ -404,6 +436,10 @@ class Scenario:
 
     def do_va_state(self, text):
         self.write_state(text)
+
+    def do_va_rules(self, *cmds):
+        for cmd in cmds:
+            self.sh_ip(*cmd)
 
     def do_bridge_up(self):
         self.bridge_up()

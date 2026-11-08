@@ -1,0 +1,126 @@
+{
+ "scenario": "routed-virtualap-rules",
+ "steps": [
+  {
+   "step": "before boot",
+   "net": {
+    "rules4": [
+     "7000: from all to 192.168.42.0/24 lookup main",
+     "7010: from all iif ap0 [detached] lookup 1012"
+    ],
+    "rules6": [
+     "7000: from all to 2001:db8:1:2::/64 lookup main",
+     "7001: from all to 2001:db8:1:2::/64 iif rmnet_data2 [detached] blackhole",
+     "7002: from all oif ap0 [detached] lookup main",
+     "7010: from all iif ap0 [detached] lookup 1012"
+    ],
+    "vap-br0": null
+   }
+  },
+  {
+   "step": "boot; rule_pref=7000 in config.sh",
+   "exit": 0,
+   "output": "",
+   "calls": [],
+   "changed": {
+    "/data/adb/modules/nyxbridge/module.prop": [
+     "0o644",
+     "0:0",
+     "id=nyxbridge\nname=NyxBridge\nversion=<module.prop>\nversionCode=<module.prop>\nauthor=poqdavid\ndescription=[💤 Idle] VirtualAP is in routed mode (the phone is already the gateway there) — details in the WebUI\nupdateJson=https://raw.githubusercontent.com/poqdavid/nyxbridge/main/update.json\n"
+    ],
+    "/data/adb/nyxbridge/nyxbridge.log": [
+     "0o644",
+     "0:0",
+     "<time> Watcher started (pid <pid>)\n<time> inactive: VirtualAP is in routed mode (the phone is already the gateway there)\n"
+    ],
+    "/dev/nyxbridge": [
+     "0o700",
+     "0:0",
+     null
+    ],
+    "/dev/nyxbridge/applied": [
+     "0o644",
+     "0:0",
+     "A4_ADDR=\nA4_BR=\nA4_IDX=\nA6_BR=\nA6_IDX=\nA6_ORIG=\nSIG6=\nPREF=7001\n"
+    ],
+    "/dev/nyxbridge/daemon.lock": [
+     "0o644",
+     "0:0",
+     ""
+    ],
+    "/dev/nyxbridge/daemon.pid": [
+     "0o644",
+     "0:0",
+     "<pid> <start time>"
+    ],
+    "/dev/nyxbridge/reconcile.lock": [
+     "0o644",
+     "0:0",
+     ""
+    ],
+    "/dev/nyxbridge/status": [
+     "0o644",
+     "0:0",
+     "state=inactive\nreason=VirtualAP is in routed mode (the phone is already the gateway there)\nreason_code=va_routed\nreason_arg=\ntime=<time>\n"
+    ]
+   },
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7000: from all to 192.168.42.0/24 lookup main",
+     "7010: from all iif ap0 [detached] lookup 1012"
+    ],
+    "rules6": [
+     "7000: from all to 2001:db8:1:2::/64 lookup main",
+     "7001: from all to 2001:db8:1:2::/64 iif rmnet_data2 [detached] blackhole",
+     "7002: from all oif ap0 [detached] lookup main",
+     "7010: from all iif ap0 [detached] lookup 1012"
+    ],
+    "vap-br0": null
+   },
+   "watchers": 1
+  },
+  {
+   "step": "VirtualAP's monitor follows a new upstream",
+   "calls": [],
+   "changed": {},
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7000: from all to 192.168.42.0/24 lookup main",
+     "7010: from all iif ap0 [detached] lookup 1031"
+    ],
+    "rules6": [
+     "7000: from all to 2001:db8:1:2::/64 lookup main",
+     "7001: from all to 2001:db8:1:2::/64 iif rmnet_data2 [detached] blackhole",
+     "7002: from all oif ap0 [detached] lookup main",
+     "7010: from all iif ap0 [detached] lookup 1031"
+    ],
+    "vap-br0": null
+   },
+   "watchers": 1
+  },
+  {
+   "step": "refused: VirtualAP's own priority",
+   "exit": 2,
+   "output": "7000 is VirtualAP's own rule priority in routed mode; pick another number\n",
+   "calls": [],
+   "changed": {},
+   "removed": [],
+   "net": {
+    "rules4": [
+     "7000: from all to 192.168.42.0/24 lookup main",
+     "7010: from all iif ap0 [detached] lookup 1031"
+    ],
+    "rules6": [
+     "7000: from all to 2001:db8:1:2::/64 lookup main",
+     "7001: from all to 2001:db8:1:2::/64 iif rmnet_data2 [detached] blackhole",
+     "7002: from all oif ap0 [detached] lookup main",
+     "7010: from all iif ap0 [detached] lookup 1031"
+    ],
+    "vap-br0": null
+   },
+   "watchers": 1
+  }
+ ]
+}

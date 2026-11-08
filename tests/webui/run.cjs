@@ -23,7 +23,8 @@
 //               (--update rewrites it)
 //   behaviour   live updates, one stream at a time, typed values kept,
 //               queued saves, managers without spawn, a missing program,
-//               batching, late palette, About after a redraw (B1-B11)
+//               batching, late palette, About after a redraw, VirtualAP's
+//               own rule priority refused (B1-B12)
 //   insets      system-bar padding on KernelSU-style and KernelSU-Next-style
 //               managers, with fullscreen on and off
 //
@@ -879,6 +880,32 @@ async function behaviour(browser, check) {
 		const st = await page.evaluate(() => ({ select: document.querySelector('#page-about [data-role="theme"]').value, theme: document.documentElement.dataset.theme, hint: document.querySelector('#page-about [data-role="theme-hint"]').textContent }));
 		check('B11 theme choice kept across a redraw', st.select === 'dark' && st.theme === 'dark' && st.hint === '' && cfgVal('webui_theme') === 'dark', `${JSON.stringify(st)} cfg=${cfgVal('webui_theme')}`);
 		check('B11 no console errors', errors.length === 0, errors.join(' | '));
+		await close();
+	}
+
+	// B12: 7000, VirtualAP's own rule priority in routed mode, can't be saved.
+	{
+		resetDevice();
+		const { page, errors, close } = await open();
+		await page.click('.nav-item[data-page="settings"]');
+		await settle(page);
+		const typed = async (value) => {
+			await page.fill('#page-settings [data-role="pref"]', value);
+			return page.evaluate(() => {
+				const hint = document.querySelector('#page-settings [data-role="pref-hint"]');
+				return {
+					hint: hint.textContent,
+					warn: hint.classList.contains('is-warn'),
+					invalid: document.querySelector('#page-settings [data-role="pref"]').classList.contains('is-invalid'),
+					save: document.querySelector('#page-settings [data-role="save-pref"]').disabled,
+				};
+			});
+		};
+		const at7000 = await typed('7000');
+		const at7002 = await typed('7002');
+		check('B12 7000 shows the VirtualAP hint and cannot be saved', at7000.save && at7000.invalid && at7000.warn && /VirtualAP's own rule priority/.test(at7000.hint), JSON.stringify(at7000));
+		check('B12 7002 next to it can be saved', !at7002.save && !at7002.invalid && !at7002.warn, JSON.stringify(at7002));
+		check('B12 no console errors', errors.length === 0, errors.join(' | '));
 		await close();
 	}
 

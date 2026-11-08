@@ -6,7 +6,7 @@ needs a phone or VirtualAP.
 
 | Suite | What it checks | Run it |
 | --- | --- | --- |
-| Boot and watcher | `service.sh` and the watcher in 20 device scenarios: every Android tool call, every file written and every address, rule and IPv6 setting on the bridge, step by step | `sudo python3 tests/boot/run.py --binary <static host build>` |
+| Boot and watcher | `service.sh` and the watcher in 21 device scenarios: every Android tool call, every file written and every address, rule and IPv6 setting on the bridge, step by step | `sudo python3 tests/boot/run.py --binary <static host build>` |
 | WebUI | Every page and setting in Chromium against the real program, live updates, route checks, diagnostics, theme and fullscreen, bridge behaviour and system-bar padding | `sudo node tests/webui/run.cjs` |
 | Installer | `customize.sh` refuses unsupported CPUs and managers before it touches anything | `python3 scripts/test-install.py` |
 
@@ -17,7 +17,8 @@ touched. They also need a kernel with IPv6, bridges and veth, and iproute2.
 ## Boot and watcher
 
 `tests/boot/run.py` builds a fake Android root for each scenario (VirtualAP
-running, stopped, late or in routed mode; monitoring off; the module
+running, stopped, late or in routed mode, there with its own rules too;
+monitoring off; the module
 disabled; custom, odd or missing settings; IPv6 with and without an
 announced prefix, with an old VirtualAP or with no IPv6 on the bridge; an app
 to restart; a binary that can't run), installs `module/` and the binary
