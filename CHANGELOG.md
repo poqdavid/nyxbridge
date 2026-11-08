@@ -95,7 +95,8 @@ First release.
   the phone's address with warnings for OpenWrt's DHCP range and the
   gateway, and the rule priority, with a warning from 10000 up, where
   Android's own rules start, and a **Default** button. Changing the
-  priority moves the rules over.
+  priority moves the rules over. 7000 is refused: VirtualAP's routed mode
+  keeps rules there that look just like NyxBridge's.
 * **Diagnostics** (Logs): one tap copies everything useful for a bug
   report — status, VirtualAP's state, the settings, both rule tables, the
   bridge's addresses, routes and IPv6 settings, and the end of the log.

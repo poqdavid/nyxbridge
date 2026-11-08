@@ -24,6 +24,8 @@ host_octet=2
 
 # Policy-rule priority. Must stay below 10000 so it is checked before
 # Android's own rules and any VPN's. Changing it moves the rules over.
+# Not 7000: VirtualAP's routed mode keeps look-alike rules there (7000 here
+# means the default).
 rule_pref=7001
 
 # Restart this app (if it's running) whenever the phone gets its address on

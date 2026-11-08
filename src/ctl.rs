@@ -276,6 +276,13 @@ fn set(p: &Paths, nl: &Sock, key: &str, val: &str, json: bool) -> ExitCode {
             if conf::num_in(val, 1, 32765).is_none() {
                 return err("The rule priority must be between 1 and 32765", 2);
             }
+            if conf::valid_pref(val).is_none() {
+                let n = conf::VIRTUALAP_PREF;
+                return err(
+                    &format!("{n} is VirtualAP's own rule priority in routed mode; pick another number"),
+                    2,
+                );
+            }
             true
         }
         "restart_app" => {

@@ -162,6 +162,7 @@
   "set_v6_targets": "Rules wanted (from the routes on the bridge)",
   "set_v6_empty": "Nothing yet: OpenWrt has not announced a prefix on the bridge.",
   "set_pref_hint_range": "Between 1 and 32765.",
+  "set_pref_hint_virtualap": "That is VirtualAP's own rule priority in routed mode.",
   "set_pref_hint_netd": "{n} or above comes after Android's own rules (VPN, per-network), which can then send hotspot traffic elsewhere.",
   "set_pref_hint": "Keep it below {n}, where Android's own rules start.",
   "set_app_hint_invalid": "Not a package name (like org.example.app)."

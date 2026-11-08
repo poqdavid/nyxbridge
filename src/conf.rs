@@ -7,6 +7,11 @@ use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 pub const DEFAULT_BRIDGE: &str = "vap-br0";
 pub const DEFAULT_PREF: u32 = 7001;
+/// VirtualAP's own rule priority in routed mode. Its return paths there,
+/// `to <subnet> lookup main` for IPv4 and IPv6, look just like NyxBridge's
+/// rules, so at this priority NyxBridge would take them for its own and
+/// remove them while it stays out of routed mode.
+pub const VIRTUALAP_PREF: u32 = 7000;
 const MODDIR_FALLBACK: &str = "/data/adb/modules/nyxbridge";
 
 #[derive(Clone, Debug)]
@@ -125,6 +130,11 @@ pub fn num_in(s: &str, min: u64, max: u64) -> Option<u64> {
     (min..=max).contains(&v).then_some(v)
 }
 
+/// A rule priority NyxBridge can use: 1 to 32765, except VirtualAP's own.
+pub fn valid_pref(s: &str) -> Option<u32> {
+    num_in(s, 1, 32765).map(|v| v as u32).filter(|&v| v != VIRTUALAP_PREF)
+}
+
 pub fn valid_ifname(s: &str) -> bool {
     !s.is_empty()
         && s.len() <= 15
@@ -185,7 +195,7 @@ impl Config {
             enabled: flag("enabled", true),
             ipv6: flag("ipv6", false),
             host: num_in(&cfg_value(text, "host_octet"), 1, 254).unwrap_or(2) as u8,
-            pref: num_in(&cfg_value(text, "rule_pref"), 1, 32765).unwrap_or(DEFAULT_PREF as u64) as u32,
+            pref: valid_pref(&cfg_value(text, "rule_pref")).unwrap_or(DEFAULT_PREF),
             restart_app: if valid_package(&app) { app } else { String::new() },
         }
     }
@@ -366,6 +376,20 @@ mod tests {
         );
         assert_eq!(Config::parse("host_octet=0").host, 2);
         assert_eq!(Config::parse("host_octet=255").host, 2);
+    }
+
+    #[test]
+    fn rule_priority_avoids_virtualaps() {
+        assert_eq!(Config::parse("rule_pref=7000").pref, DEFAULT_PREF);
+        assert_eq!(Config::parse("rule_pref='7000'").pref, DEFAULT_PREF);
+        assert_eq!(Config::parse("rule_pref=6999").pref, 6999);
+        assert_eq!(Config::parse("rule_pref=7002").pref, 7002);
+        assert_eq!(valid_pref("7000"), None);
+        assert_eq!(valid_pref("07000"), None);
+        assert_eq!(valid_pref("1"), Some(1));
+        assert_eq!(valid_pref("32765"), Some(32765));
+        assert_eq!(valid_pref("32766"), None);
+        assert_eq!(valid_pref("0"), None);
     }
 
     #[test]

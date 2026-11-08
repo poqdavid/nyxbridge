@@ -8,6 +8,8 @@ import { reasonText } from '../reasons';
 import { busyButton } from '../util';
 
 const DEFAULT_PREF = 7001;
+/** VirtualAP's own priority in routed mode, for rules that look just like NyxBridge's. */
+const VIRTUALAP_PREF = 7000;
 const NETD_FIRST_PREF = 10000;
 
 function switchHtml(role: string, label: string): string {
@@ -298,11 +300,13 @@ function validatePref(root: HTMLElement, s: Status): void {
 	const hint = $(root, '[data-role="pref-hint"]');
 	const raw = input.value.trim();
 	const n = Number(raw);
-	const valid = /^[1-9]\d{0,4}$/.test(raw) && n >= 1 && n <= 32765;
+	const valid = /^[1-9]\d{0,4}$/.test(raw) && n >= 1 && n <= 32765 && n !== VIRTUALAP_PREF;
 	input.classList.toggle('is-invalid', raw !== '' && !valid);
 	save.disabled = save.classList.contains('is-busy') || !valid || n === s.rule_pref;
 	$(root, '[data-role="reset-pref"]').hidden = s.rule_pref === DEFAULT_PREF;
-	if (raw !== '' && !valid) {
+	if (raw === String(VIRTUALAP_PREF)) {
+		setHint(hint, t('set_pref_hint_virtualap', "That is VirtualAP's own rule priority in routed mode."), true);
+	} else if (raw !== '' && !valid) {
 		setHint(hint, t('set_pref_hint_range', 'Between 1 and 32765.'), true);
 	} else if (valid && n >= NETD_FIRST_PREF) {
 		setHint(
